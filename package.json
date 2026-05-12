@@ -1,0 +1,40 @@
+{
+  "name": "facturas-gforma",
+  "version": "1.0.0",
+  "description": "Sistema de extracción automática de datos de facturas mediante inteligencia artificial usando Azure Form Recognizer.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "mindee": "^5.2.0",
+    "mssql": "^12.3.1",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "electron": "^41.2.1",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.gforma.facturas",
+    "productName": "Facturas GForma",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "extraResources": [
+      ".env"
+    ]
+  }
+}

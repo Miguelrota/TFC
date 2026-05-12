@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test ExtractionController</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ExtractionController Test Page</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Controller Initialization</h3>
+        <button onclick="testInitialization()">Test Initialization</button>
+        <div id="test1-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: API Methods Exist</h3>
+        <button onclick="testMethods()">Test Methods</button>
+        <div id="test2-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: Toast Notification</h3>
+        <button onclick="testToast()">Show Success Toast</button>
+        <button onclick="testToastError()">Show Error Toast</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 4: Processing Status</h3>
+        <button onclick="testProcessingStatus(true)">Show Processing</button>
+        <button onclick="testProcessingStatus(false)">Hide Processing</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 5: Save Status</h3>
+        <button onclick="testSaveStatus(true)">Show Success Status</button>
+        <button onclick="testSaveStatus(false)">Show Error Status</button>
+    </div>
+    
+    <div id="output">
+        <strong>Test Output:</strong>
+        <pre id="output-content"></pre>
+    </div>
+    
+    <!-- Mock UI elements that ExtractionController expects -->
+    <div style="display: none;">
+        <button id="btnProcessIA">Process</button>
+        <button id="btnSaveData">Save</button>
+        <button id="btnClearForm">Clear</button>
+        <div id="processingStatus">Processing...</div>
+        <div id="saveStatus">Save status</div>
+        <div id="toast">Toast message</div>
+    </div>
+    
+    <script>
+        // Mock InvoiceViewer
+        class MockInvoiceViewer {
+            async getDocumentData() {
+                return {
+                    file: new File(['test'], 'test.pdf', { type: 'application/pdf' }),
+                    type: 'pdf'
+                };
+            }
+            clear() {
+                console.log('Viewer cleared');
+            }
+        }
+        
+        // Mock ExtractionForm
+        class MockExtractionForm {
+            populateFields(data) {
+                console.log('Form populated with:', data);
+            }
+            getFormData() {
+                return {
+                    documentType: 'Factura',
+                    invoiceNumber: 'INV-001',
+                    legalBusinessName: 'Test Company',
+                    country: 'ES'
+                };
+            }
+            validate() {
+                return {
+                    valid: true,
+                    errors: [],
+                    warnings: []
+                };
+            }
+            showValidationFeedback(result) {
+                console.log('Validation feedback:', result);
+            }
+            clear() {
+                console.log('Form cleared');
+            }
+        }
+        
+        // Initialize mocks
+        window.invoiceViewer = new MockInvoiceViewer();
+        window.extractionForm = new MockExtractionForm();
+    </script>
+    
+    <!-- Load ExtractionController -->
+    <script src="js/extraction-controller.js"></script>
+    
+    <script>
+        function log(message, isError = false) {
+            const output = document.getElementById('output-content');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = isError ? 'error' : 'success';
+            output.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+        }
+        
+        function testInitialization() {
+            const result = document.getElementById('test1-result');
+            try {
+                if (window.extractionController) {
+                    result.innerHTML = '<span class="success">✓ Controller initialized successfully</span>';
+                    log('Controller initialization test PASSED');
+                } else {
+                    result.innerHTML = '<span class="error">✗ Controller not found</span>';
+                    log('Controller initialization test FAILED', true);
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">✗ Error: ${error.message}</span>`;
+                log(`Controller initialization test ERROR: ${error.message}`, true);
+            }
+        }
+        
+        function testMethods() {
+            const result = document.getElementById('test2-result');
+            const controller = window.extractionController;
+            
+            if (!controller) {
+                result.innerHTML = '<span class="error">✗ Controller not initialized</span>';
+                return;
+            }
+            
+            const methods = [
+                'processInvoice',
+                'saveExtractedData',
+                'loadFromXML',
+                'showToast',
+                'showProcessingStatus',
+                'showSaveStatus'
+            ];
+            
+            const missing = methods.filter(method => typeof controller[method] !== 'function');
+            
+            if (missing.length === 0) {
+                result.innerHTML = '<span class="success">✓ All methods exist</span>';
+                log('Methods test PASSED - All methods found');
+            } else {
+                result.innerHTML = `<span class="error">✗ Missing methods: ${missing.join(', ')}</span>`;
+                log(`Methods test FAILED - Missing: ${missing.join(', ')}`, true);
+            }
+        }
+        
+        function testToast() {
+            if (window.extractionController) {
+                window.extractionController.showToast('Test success message', 'success');
+                log('Toast test (success) executed');
+            }
+        }
+        
+        function testToastError() {
+            if (window.extractionController) {
+                window.extractionController.showToast('Test error message', 'error');
+                log('Toast test (error) executed');
+            }
+        }
+        
+        function testProcessingStatus(show) {
+            if (window.extractionController) {
+                window.extractionController.showProcessingStatus(show);
+                log(`Processing status ${show ? 'shown' : 'hidden'}`);
+            }
+        }
+        
+        function testSaveStatus(success) {
+            if (window.extractionController) {
+                const message = success ? 'Save successful!' : 'Save failed!';
+                window.extractionController.showSaveStatus(message, success);
+                log(`Save status test (${success ? 'success' : 'error'}) executed`);
+            }
+        }
+        
+        // Auto-run initialization test after a short delay
+        setTimeout(() => {
+            testInitialization();
+            testMethods();
+        }, 500);
+    </script>
+</body>
+</html>

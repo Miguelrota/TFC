@@ -1,0 +1,9 @@
+# Copia este archivo como `config/application-sqlserver.properties` (no se versiona)
+# y rellena las credenciales localmente (sin pegarlas en el chat).
+
+spring.datasource.url=jdbc:sqlserver://w2019-sql:1433;databaseName=GestionFormacion;encrypt=true;trustServerCertificate=true
+spring.datasource.username=us_AccesoTotal
+spring.datasource.password=CAMBIA_ESTO
+
+# Opcional (recomendado): valida esquema existente
+spring.jpa.hibernate.ddl-auto=validate

@@ -1,0 +1,7 @@
+/target/
+/output/
+/.m2/
+/config/application-sqlserver.properties
+/config/application-local.properties
+*.log
+node_modules

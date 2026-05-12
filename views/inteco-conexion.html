@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inteco – Configuración de Conexión</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #1b2d5b;
+      --blue: #2d6ecc;
+      --sky: #4fa3e0;
+      --white: #ffffff;
+      --gray-bg: #f0f4fa;
+      --gray-text: #7a8ba8;
+      --success: #2ecc71;
+      --error: #e05c5c;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: transparent;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      margin: 0;
+      padding: 0;
+    }
+
+    .card {
+      position: relative;
+      background: var(--white);
+      border-radius: 28px;
+      width: 460px;
+      padding: 36px 40px 32px;
+      box-shadow:
+        0 4px 6px rgba(27,45,91,0.04),
+        0 20px 60px rgba(27,45,91,0.12),
+        0 0 0 1px rgba(27,45,91,0.06);
+      animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+      z-index: 10;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(32px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 40px; right: 40px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--navy), var(--blue), var(--sky));
+      border-radius: 0 0 3px 3px;
+    }
+
+    .headline {
+      margin-bottom: 28px;
+    }
+    .headline h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: -0.4px;
+      margin-bottom: 3px;
+    }
+    .headline p {
+      font-size: 13px;
+      color: var(--gray-text);
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gray-text);
+      margin-bottom: 8px;
+    }
+
+    .conn-select-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .conn-select-wrap {
+      flex: 1;
+      position: relative;
+    }
+    .conn-select-wrap select {
+      width: 100%;
+      height: 42px;
+      padding: 0 36px 0 14px;
+      border: 1.5px solid #dde5f3;
+      border-radius: 11px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--navy);
+      background: var(--white);
+      appearance: none;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .conn-select-wrap select:focus {
+      border-color: var(--sky);
+      box-shadow: 0 0 0 3px rgba(79,163,224,0.15);
+    }
+    .conn-select-wrap .chevron {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--gray-text);
+    }
+
+    .btn-icon {
+      width: 42px; height: 42px;
+      border: 1.5px solid #dde5f3;
+      border-radius: 11px;
+      background: var(--white);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #c0cde0;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-icon:hover { border-color: var(--error); color: var(--error); background: rgba(224,92,92,0.05); }
+
+    .btn-test {
+      height: 42px;
+      padding: 0 16px;
+      background: linear-gradient(135deg, #eef5ff, #dde8ff);
+      border: 1.5px solid #c0d0f0;
+      border-radius: 11px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--blue);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .btn-test:hover { background: linear-gradient(135deg, #dde8ff, #ccd8ff); transform: translateY(-1px); }
+
+    .test-status {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, margin 0.3s ease;
+    }
+    .test-status.show { max-height: 40px; margin-top: 8px; }
+    .test-status-inner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+      height: 36px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .test-status.success .test-status-inner { background: rgba(46,204,113,0.1); color: #27ae60; }
+    .test-status.error   .test-status-inner { background: rgba(224,92,92,0.1);  color: var(--error); }
+    .test-status.testing .test-status-inner { background: rgba(45,110,204,0.08); color: var(--blue); }
+
+    .add-section { margin-top: 22px; }
+
+    .add-form {
+      border: 1.5px solid #e4eaf4;
+      border-radius: 14px;
+      padding: 16px;
+      background: #fafcff;
+    }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 96px;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--navy);
+      opacity: 0.7;
+      margin-bottom: 5px;
+    }
+    .field input {
+      width: 100%;
+      height: 38px;
+      padding: 0 12px;
+      border: 1.5px solid #dde5f3;
+      border-radius: 9px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13.5px;
+      color: var(--navy);
+      background: var(--white);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field input:focus {
+      border-color: var(--sky);
+      box-shadow: 0 0 0 3px rgba(79,163,224,0.15);
+    }
+    .field input::placeholder { color: #b0bdd4; }
+
+    .btn-add {
+      width: 100%;
+      height: 36px;
+      background: #f0f4fa;
+      border: 1.5px dashed #c0d0e8;
+      border-radius: 9px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--blue);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-add:hover { background: #e6eeff; border-color: var(--sky); }
+
+    .divider { height: 1px; background: #e8eef8; margin: 24px 0; }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .btn-save {
+      height: 44px;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+      border: none;
+      border-radius: 12px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(45,110,204,0.3);
+    }
+    .btn-save:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(45,110,204,0.4); }
+    .btn-save:active { transform: translateY(0); }
+
+    .btn-cancel {
+      height: 44px;
+      background: #f0f4fa;
+      border: 1.5px solid #dde5f3;
+      border-radius: 12px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-cancel:hover { background: #e8eef8; color: var(--navy); }
+
+    .card-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--gray-text);
+    }
+    .card-footer a { color: var(--gray-text); text-decoration: none; transition: color 0.15s; }
+    .card-footer a:hover { color: var(--blue); }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(45,110,204,0.2);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+
+    <div class="headline">
+      <h1>Conexión</h1>
+      <p>Selecciona o añade una conexión al servidor</p>
+    </div>
+
+    <div class="section-label">Conexión</div>
+    <div class="conn-select-row">
+      <div class="conn-select-wrap">
+        <select id="conn-select">
+        </select>
+        <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <button class="btn-icon" onclick="deleteSelected()" title="Eliminar conexión seleccionada">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>
+
+    <div class="field" style="margin-top:10px;">
+      <label>Base de datos</label>
+      <input type="text" id="db-name" value="GestionFormacion">
+    </div>
+
+    <button class="btn-test" onclick="testConnection()" style="margin-top:10px; width:100%; justify-content:center;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      Probar conexión
+    </button>
+
+    <div class="test-status" id="test-status">
+      <div class="test-status-inner" id="test-status-inner"></div>
+    </div>
+
+    <div class="add-section">
+      <div class="section-label">Añadir conexión</div>
+      <div class="add-form">
+        <div class="row-2">
+          <div class="field">
+            <label>Servidor</label>
+            <input type="text" id="new-server" placeholder="ej: mi-servidor-sql">
+          </div>
+          <div class="field">
+            <label>Puerto</label>
+            <input type="text" id="new-port" placeholder="1433">
+          </div>
+        </div>
+        <button class="btn-add" onclick="addConnection()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Añadir
+        </button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="actions">
+      <button class="btn-save" onclick="saveConfig()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Guardar
+      </button>
+      <button class="btn-cancel" onclick="closeWindow()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Salir
+      </button>
+    </div>
+
+    <div class="card-footer">
+      <a href="https://www.intecoingenieria.com" target="_blank">www.intecoingenieria.com</a>
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('dblclick', e => e.stopPropagation());
+
+    async function loadSavedConfig() {
+      try {
+        const res = await window.api.invoke('db:getConfig');
+        if (!res.ok || !res.data) return;
+
+        const { server, database, conexiones } = res.data;
+        const sel     = document.getElementById('conn-select');
+        const dbInput = document.getElementById('db-name');
+
+        sel.innerHTML = '';
+        if (conexiones && conexiones.length > 0) {
+          conexiones.forEach(c => sel.add(new Option(c, c)));
+        }
+        if (server) sel.value = server;
+        if (database) dbInput.value = database;
+
+      } catch (e) { }
+    }
+
+    loadSavedConfig();
+
+    (function() {
+      let dragging = false, startX, startY;
+      document.querySelector('.card').addEventListener('mousedown', (e) => {
+        if (e.target.closest('input, button, a, select, textarea, label')) return;
+        dragging = true; startX = e.screenX; startY = e.screenY;
+        e.preventDefault();
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        window.api.send('window-move', { deltaX: e.screenX - startX, deltaY: e.screenY - startY });
+        startX = e.screenX; startY = e.screenY;
+      });
+      document.addEventListener('mouseup', () => { dragging = false; });
+    })();
+
+    function deleteSelected() {
+      const sel = document.getElementById('conn-select');
+      if (sel.options.length === 0) return;
+      sel.remove(sel.selectedIndex);
+    }
+
+    function addConnection() {
+      const serverInput = document.getElementById('new-server');
+      const portInput   = document.getElementById('new-port');
+      const server      = serverInput.value.trim();
+      const port        = portInput.value.trim();
+
+      if (!server) {
+        serverInput.focus();
+        serverInput.style.borderColor = 'var(--error)';
+        setTimeout(() => serverInput.style.borderColor = '', 1500);
+        return;
+      }
+
+      const label = port ? `${server},${port}` : server;
+      const sel   = document.getElementById('conn-select');
+
+      const exists = Array.from(sel.options).some(o => o.value === label);
+      if (!exists) {
+        sel.add(new Option(label, label));
+      }
+      sel.value = label;
+      serverInput.value = '';
+      portInput.value   = '';
+    }
+
+    async function testConnection() {
+      const statusEl = document.getElementById('test-status');
+      const innerEl  = document.getElementById('test-status-inner');
+      const server   = document.getElementById('conn-select').value;
+      const database = document.getElementById('db-name').value.trim();
+
+      if (!server) {
+        statusEl.className = 'test-status show error';
+        innerEl.innerHTML  = iconX() + '<span>Selecciona un servidor primero</span>';
+        return;
+      }
+
+      statusEl.className = 'test-status show testing';
+      innerEl.innerHTML  = '<div class="spinner"></div><span>Probando conexión...</span>';
+
+      try {
+        const res = await window.api.invoke('db:testConnection', { server, database });
+        if (res.ok) {
+          statusEl.className = 'test-status show success';
+          innerEl.innerHTML  = iconOk() + `<span>Conectado correctamente a <strong>${res.data.servidor}</strong></span>`;
+        } else {
+          statusEl.className = 'test-status show error';
+          innerEl.innerHTML  = iconX() + `<span>${res.error}</span>`;
+        }
+      } catch (err) {
+        statusEl.className = 'test-status show error';
+        innerEl.innerHTML  = iconX() + '<span>Error inesperado al probar la conexión</span>';
+      }
+      setTimeout(() => statusEl.className = 'test-status', 6000);
+    }
+
+    async function saveConfig() {
+      const sel    = document.getElementById('conn-select');
+      const dbName = document.getElementById('db-name').value.trim();
+      const btn    = document.querySelector('.btn-save');
+
+      if (!sel.value) {
+        alert('Añade y selecciona un servidor primero');
+        return;
+      }
+
+      btn.innerHTML  = '<div class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:white;"></div><span>Guardando...</span>';
+      btn.style.opacity = '0.85';
+      btn.disabled   = true;
+
+      const conexiones = Array.from(sel.options).map(o => o.value).filter(Boolean);
+      const res = await window.api.invoke('db:saveConfig', { server: sel.value, database: dbName, conexiones });
+
+      if (res.ok) {
+        showToast('✓ Configuración guardada correctamente');
+        btn.innerHTML = iconOk() + '<span>Guardado</span>';
+        btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
+        setTimeout(() => window.api.send('close-conexion'), 1500);
+      } else {
+        btn.innerHTML  = '<span>Guardar</span>';
+        btn.style.opacity  = '1';
+        btn.style.background = '';
+        btn.disabled = false;
+        showToast('✗ Error al guardar: ' + res.error, true);
+      }
+    }
+
+    function closeWindow() {
+      window.api.send('close-conexion');
+    }
+
+    function showToast(msg, isError = false) {
+      let t = document.getElementById('toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'toast';
+        t.style.cssText = `
+          position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+          padding:10px 22px; border-radius:50px; font-size:13px; font-weight:500;
+          box-shadow:0 4px 20px rgba(0,0,0,0.15); z-index:999;
+          transition:opacity 0.3s; white-space:nowrap;
+        `;
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.background = isError ? '#e05c5c' : '#2ecc71';
+      t.style.color = '#fff';
+      t.style.opacity = '1';
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.style.opacity = '0', 2500);
+    }
+
+    function iconOk() {
+      return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    }
+    function iconX() {
+      return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    }
+  </script>
+</body>
+</html>
