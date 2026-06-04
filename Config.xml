@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Main>
+  <Conexion Id="1" Valor="w2019-sql,1433"/>
+  <ConexionActual Id="1"/>
+  <BaseDatos>
+    <Valor>GestionFormacion</Valor>
+  </BaseDatos>
+  <RutaFondo>C:\Users\mdbarca\Desktop\Facturas GForma\dist\Fondos\IntecoLogin.png</RutaFondo>
+</Main>

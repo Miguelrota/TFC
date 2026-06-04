@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - MainInterface Component</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-bottom: 15px;
+            color: #2563eb;
+        }
+        .test-button {
+            margin: 10px 5px;
+        }
+        .status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .status.success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .status.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .status.info {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>MainInterface Component Test</h1>
+        <p>Test suite for the MainInterface component functionality</p>
+
+        <div class="test-section">
+            <h3>Test 1: Initialization</h3>
+            <p>Verify that MainInterface initializes correctly and finds all required DOM elements.</p>
+            <button id="testInit" class="btn btn-primary test-button">Run Test</button>
+            <div id="statusInit" class="status" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: Open Modal</h3>
+            <p>Click the button below to test opening the extraction view modal.</p>
+            <button id="btnAltaFacturasIA" class="btn btn-primary btn-large">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+                Alta Facturas IA
+            </button>
+            <div id="statusOpen" class="status" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: Programmatic Control</h3>
+            <p>Test opening and closing the modal programmatically.</p>
+            <button id="testOpenProgrammatic" class="btn btn-primary test-button">Open Modal</button>
+            <button id="testCloseProgrammatic" class="btn btn-primary test-button">Close Modal</button>
+            <div id="statusProgrammatic" class="status" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 4: ESC Key</h3>
+            <p>Open the modal and press ESC key to close it.</p>
+            <button id="testEscKey" class="btn btn-primary test-button">Open Modal (then press ESC)</button>
+            <div id="statusEsc" class="status" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test Results Summary</h3>
+            <div id="testSummary" class="status info">
+                <strong>Status:</strong> Ready to run tests
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Extracción -->
+    <div id="extractionModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Extracción de Factura con IA</h2>
+                <button id="btnCloseModal" class="btn-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="extractionFrame" src="extraction-view.html" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Test suite
+        let mainInterface;
+        let testResults = {
+            passed: 0,
+            failed: 0
+        };
+
+        // Wait for MainInterface to initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            // Give MainInterface time to initialize
+            setTimeout(() => {
+                // Access the MainInterface instance (we'll need to expose it)
+                setupTests();
+            }, 100);
+        });
+
+        function setupTests() {
+            // Test 1: Initialization
+            document.getElementById('testInit').addEventListener('click', () => {
+                const statusEl = document.getElementById('statusInit');
+                statusEl.style.display = 'block';
+
+                const modal = document.getElementById('extractionModal');
+                const btnOpen = document.getElementById('btnAltaFacturasIA');
+                const btnClose = document.getElementById('btnCloseModal');
+                const frame = document.getElementById('extractionFrame');
+
+                if (modal && btnOpen && btnClose && frame) {
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✓ PASSED: All required DOM elements found';
+                    testResults.passed++;
+                } else {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '✗ FAILED: Some DOM elements are missing';
+                    testResults.failed++;
+                }
+                updateSummary();
+            });
+
+            // Test 2: Monitor modal open
+            const modal = document.getElementById('extractionModal');
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.attributeName === 'style') {
+                        const statusEl = document.getElementById('statusOpen');
+                        if (modal.style.display === 'flex') {
+                            statusEl.style.display = 'block';
+                            statusEl.className = 'status success';
+                            statusEl.textContent = '✓ Modal opened successfully';
+                        } else if (modal.style.display === 'none') {
+                            statusEl.style.display = 'block';
+                            statusEl.className = 'status info';
+                            statusEl.textContent = 'ℹ Modal closed';
+                        }
+                    }
+                });
+            });
+            observer.observe(modal, { attributes: true });
+
+            // Test 3: Programmatic control
+            document.getElementById('testOpenProgrammatic').addEventListener('click', () => {
+                const statusEl = document.getElementById('statusProgrammatic');
+                statusEl.style.display = 'block';
+                statusEl.className = 'status info';
+                statusEl.textContent = 'Opening modal programmatically...';
+                
+                // Simulate click on the main button
+                document.getElementById('btnAltaFacturasIA').click();
+                
+                setTimeout(() => {
+                    if (modal.style.display === 'flex') {
+                        statusEl.className = 'status success';
+                        statusEl.textContent = '✓ PASSED: Modal opened programmatically';
+                        testResults.passed++;
+                        updateSummary();
+                    }
+                }, 100);
+            });
+
+            document.getElementById('testCloseProgrammatic').addEventListener('click', () => {
+                const statusEl = document.getElementById('statusProgrammatic');
+                
+                // Simulate click on close button
+                document.getElementById('btnCloseModal').click();
+                
+                setTimeout(() => {
+                    if (modal.style.display === 'none') {
+                        statusEl.className = 'status success';
+                        statusEl.textContent = '✓ PASSED: Modal closed programmatically';
+                        testResults.passed++;
+                        updateSummary();
+                    }
+                }, 100);
+            });
+
+            // Test 4: ESC key
+            document.getElementById('testEscKey').addEventListener('click', () => {
+                const statusEl = document.getElementById('statusEsc');
+                statusEl.style.display = 'block';
+                statusEl.className = 'status info';
+                statusEl.textContent = 'Modal opened. Press ESC to close...';
+                
+                // Open modal
+                document.getElementById('btnAltaFacturasIA').click();
+                
+                // Listen for ESC key
+                const escHandler = (e) => {
+                    if (e.key === 'Escape') {
+                        setTimeout(() => {
+                            if (modal.style.display === 'none') {
+                                statusEl.className = 'status success';
+                                statusEl.textContent = '✓ PASSED: Modal closed with ESC key';
+                                testResults.passed++;
+                                updateSummary();
+                            }
+                            document.removeEventListener('keydown', escHandler);
+                        }, 100);
+                    }
+                };
+                document.addEventListener('keydown', escHandler);
+            });
+        }
+
+        function updateSummary() {
+            const summaryEl = document.getElementById('testSummary');
+            const total = testResults.passed + testResults.failed;
+            summaryEl.innerHTML = `
+                <strong>Test Results:</strong><br>
+                Passed: ${testResults.passed}<br>
+                Failed: ${testResults.failed}<br>
+                Total: ${total}
+            `;
+            
+            if (testResults.failed === 0 && total > 0) {
+                summaryEl.className = 'status success';
+            } else if (testResults.failed > 0) {
+                summaryEl.className = 'status error';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alta de Proveedores</title>
+    <script>
+        document.documentElement.dataset.theme = localStorage.getItem('app-theme') || 'light';
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'theme-change') {
+                document.documentElement.dataset.theme = event.data.theme === 'dark' ? 'dark' : 'light';
+            }
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f1f5f9;
+            --surface: #ffffff;
+            --surface2: #f8fafc;
+            --border: rgba(15, 23, 42, 0.08);
+            --border-med: rgba(15, 23, 42, 0.15);
+            --text: #0f172a;
+            --text-muted: #475569;
+            --text-hint: #94a3b8;
+            --accent: #1e3a8a;
+            --accent-bg: #e2e8f0;
+            --accent-text: #1e40af;
+            --success: #059669;
+            --success-bg: #ecfdf5;
+            --danger: #dc2626;
+            --danger-bg: #fef2f2;
+            --warn: #b45309;
+            --warn-bg: #fffbeb;
+            --radius: 8px;
+            --radius-lg: 12px;
+            --radius-pill: 20px;
+        }
+
+        html[data-theme="dark"] {
+            --bg: #111315;
+            --surface: #181b1f;
+            --surface2: #23272d;
+            --border: rgba(226, 232, 240, 0.10);
+            --border-med: rgba(226, 232, 240, 0.18);
+            --text: #f8fafc;
+            --text-muted: #cbd5e1;
+            --text-hint: #94a3b8;
+            --accent: #60a5fa;
+            --accent-bg: rgba(96, 165, 250, 0.18);
+            --accent-text: #bfdbfe;
+            --success: #34d399;
+            --success-bg: rgba(52, 211, 153, 0.14);
+            --danger: #f87171;
+            --danger-bg: rgba(248, 113, 113, 0.14);
+            --warn: #fbbf24;
+            --warn-bg: rgba(251, 191, 36, 0.14);
+        }
+
+        body {
+            font-family: 'DM Sans', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 13px;
+            line-height: 1.5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: var(--surface);
+            border-bottom: 0.5px solid var(--border-med);
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .topbar-title {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .badge {
+            padding: 3px 10px;
+            border-radius: var(--radius-pill);
+            background: var(--accent-bg);
+            color: var(--accent-text);
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .resizer {
+            width: 4px;
+            cursor: col-resize;
+            background: transparent;
+            transition: background 0.2s;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .resizer:hover, .resizer.resizing {
+            background: var(--accent);
+        }
+
+        /* VISOR */
+        .viewer-panel {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+            background: var(--surface);
+            min-width: 200px;
+        }
+
+        .panel-header {
+            padding: 10px 16px;
+            border-bottom: 0.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            background: var(--surface2);
+        }
+
+        .panel-header h3 {
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--text-hint);
+        }
+
+        .zoom-controls {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--surface);
+            padding: 2px;
+            border-radius: var(--radius);
+            border: 0.5px solid var(--border-med);
+        }
+
+        .btn-zoom {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.12s;
+        }
+
+        .btn-zoom:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+
+        .zoom-level {
+            font-size: 11px;
+            font-weight: 500;
+            min-width: 36px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .viewer-body {
+            flex: 1;
+            overflow: auto;
+            background: var(--bg);
+            padding: 20px;
+        }
+
+        .viewer-placeholder {
+            text-align: center;
+            padding: 48px 24px;
+        }
+
+        .placeholder-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: var(--radius-lg);
+            background: var(--surface2);
+            border: 0.5px solid var(--border-med);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+        }
+
+        .viewer-placeholder p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .viewer-placeholder .hint {
+            font-size: 11px;
+            color: var(--text-hint);
+        }
+
+        #documentCanvas {
+            display: none;
+            margin: auto;
+            border-radius: var(--radius);
+            border: 0.5px solid var(--border-med);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: #ffffff;
+        }
+
+        .viewer-footer {
+            padding: 10px 16px;
+            border-top: 0.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            background: var(--surface);
+        }
+
+        .processing-status {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .processing-status.visible {
+            display: flex;
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border-med);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* FORMULARIO */
+        .form-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--surface);
+            width: 40%;
+            min-width: 300px;
+            max-width: 800px;
+            border-left: 0.5px solid var(--border-med);
+        }
+
+        .form-body {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .form-body::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .form-body::-webkit-scrollbar-thumb {
+            background: var(--border-med);
+            border-radius: 2px;
+        }
+
+        fieldset {
+            border: none;
+            border-bottom: 0.5px solid var(--border);
+            padding: 14px 16px;
+        }
+
+        legend {
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--text-hint);
+            margin-bottom: 12px;
+            width: 100%;
+            padding: 0;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .form-control {
+            width: 100%;
+            font-family: inherit;
+            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: var(--radius);
+            border: 0.5px solid var(--border-med);
+            background: var(--surface2);
+            color: var(--text);
+            outline: none;
+            transition: border-color .12s;
+        }
+
+        html[data-theme="light"] .form-control {
+            color-scheme: light;
+        }
+
+        html[data-theme="dark"] .form-control {
+            color-scheme: dark;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            background: var(--surface);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 56px;
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        select.form-control option {
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        select.form-control option:checked,
+        select.form-control option:hover {
+            background: var(--accent-bg);
+            color: var(--text);
+        }
+
+        .field-validation {
+            font-size: 10px;
+            color: var(--text-hint);
+            min-height: 14px;
+            margin-top: 3px;
+        }
+
+        .validation-summary {
+            margin: 12px 16px;
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .val-block {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .val-block.errors {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .val-block.warnings {
+            background: var(--warn-bg);
+            color: var(--warn);
+        }
+
+        .form-footer {
+            padding: 10px 16px;
+            border-top: 0.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            background: var(--surface2);
+        }
+
+        .save-status {
+            font-size: 12px;
+            color: var(--success);
+            margin-left: auto;
+        }
+
+        .save-status.error {
+            color: var(--danger);
+        }
+
+        /* BOTONES */
+        .btn {
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            border: 0.5px solid var(--border-med);
+            background: var(--surface);
+            color: var(--text);
+            transition: background .12s, opacity .12s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: var(--surface2);
+        }
+
+        .btn:active {
+            transform: scale(.98);
+        }
+
+        .btn:disabled {
+            opacity: .4;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
+            color: #fff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            opacity: .88;
+            background: var(--accent);
+        }
+
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 11px;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border-color: transparent;
+            color: var(--text-muted);
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface2);
+            color: var(--text);
+            border-color: transparent;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            background: var(--surface);
+            border: 0.5px solid var(--border-med);
+            color: var(--text);
+            display: none;
+            z-index: 999;
+            animation: slideUp .2s ease;
+        }
+
+        .toast-success {
+            background: var(--success-bg);
+            color: var(--success);
+            border-color: transparent;
+        }
+
+        .toast-error {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border-color: transparent;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(8px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* STEPPER */
+        .form-stepper {
+            display: flex;
+            gap: 2px;
+            padding: 12px 16px;
+            background: var(--surface2);
+            border-bottom: 0.5px solid var(--border);
+        }
+
+        .step-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            border: 0.5px solid transparent;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .step-btn.active {
+            background: var(--surface);
+            border-color: var(--border-med);
+            color: var(--accent);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }
+
+        .step-num {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--border-med);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+        .step-btn.active .step-num {
+            background: var(--accent);
+        }
+
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        /* FORM GRID FOR STEP 2 */
+        .invoice-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .tabs-header {
+            display: flex;
+            border-bottom: 0.5px solid var(--border);
+            margin-top: 10px;
+            padding: 0 16px;
+        }
+
+        .tab-item {
+            padding: 8px 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .tab-item.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* INVOICE LINES TABLE */
+        .lines-container {
+            margin: 10px 16px;
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            background: var(--surface);
+        }
+
+        .lines-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .lines-table th {
+            background: var(--surface2);
+            padding: 8px;
+            text-align: left;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-bottom: 0.5px solid var(--border);
+        }
+
+        .lines-table td {
+            padding: 2px 4px;
+            border-bottom: 0.5px solid var(--border-light);
+        }
+
+        .lines-table input {
+            width: 100%;
+            border: 1px solid transparent;
+            background: transparent;
+            padding: 4px 2px;
+            font-size: 11px;
+            color: var(--text);
+            border-radius: 2px;
+            box-sizing: border-box;
+        }
+
+        .lines-table td:nth-child(3) input,
+        .lines-table td:nth-child(4) input,
+        .lines-table td:nth-child(5) input {
+            text-align: center;
+        }
+
+        .lines-table input:hover {
+            background: var(--surface2);
+            border-color: var(--border-med);
+        }
+
+        .lines-table input:focus {
+            border-color: var(--accent);
+            background: var(--surface);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        .lines-table tr:hover {
+            background: var(--surface2);
+        }
+
+        .btn-remove-line {
+            color: var(--error);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-remove-line:hover {
+            background: var(--danger-bg);
+        }
+
+        /* SUMMARY SECTION */
+        .summary-container {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 20px;
+            padding: 16px;
+            background: var(--surface2);
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+        }
+
+        .summary-block {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        .summary-row .label {
+            color: var(--text-muted);
+        }
+
+        .summary-row .value {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .summary-row.total {
+            margin-top: 4px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--accent);
+        }
+
+        .summary-row.total .value {
+            color: var(--accent);
+        }
+
+        .ico {
+            width: 14px;
+            height: 14px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* Hide automated buttons */
+        #btnProcessIA {
+            display: none !important;
+        }
+
+        /* Custom dropdown with icons for Tipo Proveedor */
+        .select-with-icon {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-box {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            background: var(--surface2);
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .prov-type-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* BULK PROCESSING QUEUE */
+        .queue-panel {
+            width: 260px;
+            display: flex;
+            flex-direction: column;
+            background: var(--surface);
+            border-right: 0.5px solid var(--border-med);
+            flex-shrink: 0;
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+
+        .queue-panel.collapsed {
+            width: 0 !important;
+            border-right: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toggle-queue-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            margin-right: 8px;
+            background: var(--surface2);
+            color: var(--text);
+            border: 0.5px solid var(--border-med);
+        }
+
+        .toggle-queue-btn:hover {
+            background: var(--border-med);
+        }
+
+        .toggle-queue-btn.visible {
+            display: flex;
+        }
+
+        .queue-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .queue-item {
+            padding: 10px 12px;
+            border-radius: var(--radius);
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+        }
+
+        .queue-item:hover {
+            background: var(--surface2);
+        }
+
+        .queue-item.active {
+            background: var(--accent-bg);
+            border-color: var(--accent);
+        }
+
+        .queue-item-name {
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text);
+        }
+
+        .queue-item-status {
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .status-pending .status-dot { background: var(--text-hint); }
+        .status-processing .status-dot { background: var(--accent); animation: pulse 1s infinite; }
+        .status-ready .status-dot { background: var(--success); }
+        .status-error .status-dot { background: var(--danger); }
+
+        .status-pending { color: var(--text-hint); }
+        .status-processing { color: var(--accent); }
+        .status-ready { color: var(--success); }
+        .status-error { color: var(--danger); }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        .drop-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(45, 91, 227, 0.15);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            border: 3px dashed var(--accent);
+            box-sizing: border-box;
+        }
+
+        .drop-overlay.active {
+            display: flex;
+        }
+
+        .drop-message {
+            background: var(--surface);
+            padding: 20px 40px;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .drop-message h2 {
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="topbar">
+        <span class="topbar-title">Gestión de Facturas</span>
+        <span class="badge">IA</span>
+        <div class="topbar-right">
+            <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.tiff,.tif" style="display:none">
+            <button class="btn" id="btnLoadDocument">
+                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M2 12V4a1 1 0 011-1h6l3 3v6a1 1 0 01-1 1H3a1 1 0 01-1-1z" />
+                    <path d="M9 3v3h3" />
+                </svg>
+                Cargar documento
+            </button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="drop-overlay" id="dropOverlay">
+            <div class="drop-message">
+                <h2>Suelta tus archivos aquí</h2>
+                <p>Procesaremos todas las facturas automáticamente</p>
+            </div>
+        </div>
+
+        <div class="queue-panel" id="queuePanel">
+            <div class="panel-header">
+                <h3>Cola (<span id="queueCount">0</span>)</h3>
+                <div style="display: flex; gap: 4px;">
+                    <button class="btn-sm btn-ghost" id="btnClearQueue" title="Limpiar cola">
+                        <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M13 3L3 13M3 3l10 10" />
+                        </svg>
+                    </button>
+                    <button class="btn-sm btn-ghost" id="btnHideQueue" title="Ocultar cola">
+                        <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M10 12l-4-4 4-4" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="queue-list" id="queueList">
+                <!-- Items go here -->
+            </div>
+        </div>
+        <div class="resizer" id="resizerQueue"></div>
+
+        <div class="viewer-panel" id="viewerPanel">
+            <div class="panel-header">
+                <div class="toggle-queue-btn" id="btnShowQueue" title="Mostrar cola">
+                    <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M6 12l4-4-4-4" />
+                    </svg>
+                </div>
+                <h3>Documento</h3>
+                <div class="zoom-controls">
+                    <!-- Pagination Controls -->
+                    <div id="pageControls" style="display: none; align-items: center; gap: 4px; border-right: 0.5px solid var(--border-med); padding-right: 4px; margin-right: 4px;">
+                        <button id="btnPrevPage" class="btn-zoom" title="Anterior">
+                            <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M10 12L6 8l4-4" />
+                            </svg>
+                        </button>
+                        <span id="pageInfo" class="zoom-level">1 / 1</span>
+                        <button id="btnNextPage" class="btn-zoom" title="Siguiente">
+                            <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M6 12l4-4-4-4" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <button id="btnZoomOut" class="btn-zoom" title="Alejar">
+                        <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M4 8h8" />
+                        </svg>
+                    </button>
+                    <span id="zoomLevel" class="zoom-level">100%</span>
+                    <button id="btnZoomIn" class="btn-zoom" title="Acercar">
+                        <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M4 8h8M8 4v8" />
+                        </svg>
+                    </button>
+                    <button id="btnZoomReset" class="btn-zoom" title="Resetear">
+                        <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M2 8a6 6 0 116 6 6 6 0 01-4-1.5" />
+                            <path d="M2 5v3h3" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="viewer-body" id="viewerContent">
+                <div class="viewer-placeholder" id="viewerPlaceholder">
+                    <div class="placeholder-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                    </div>
+                    <p>Cargue un documento para comenzar</p>
+                    <p class="hint">Formatos soportados: PDF, JPEG, PNG, TIFF</p>
+                </div>
+                <canvas id="documentCanvas"></canvas>
+            </div>
+
+            <div class="viewer-footer">
+                <button class="btn btn-primary" id="btnProcessIA" disabled>
+                    <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="8" cy="8" r="5" />
+                        <path d="M8 5v3l2 1" />
+                    </svg>
+                    Extraer Información
+                </button>
+                <div class="processing-status" id="processingStatus">
+                    <div class="spinner"></div>
+                    <span>Procesando documento...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="resizer" id="panelResizer"></div>
+
+        <div class="form-panel" id="formPanel">
+            <div class="form-stepper">
+                <button class="step-btn active" id="btnStep1" data-step="1">
+                    <div class="step-num">1</div>
+                    <div>Alta Proveedor</div>
+                </button>
+                <button class="step-btn" id="btnStep2" data-step="2">
+                    <div class="step-num">2</div>
+                    <div>Alta Factura</div>
+                </button>
+            </div>
+
+            <div class="form-body">
+                <!-- STEP 1: PROVEEDOR -->
+                <div id="step1Content" class="step-content active">
+                    <div class="panel-header" style="background:transparent; border-bottom:none">
+                        <h3>Datos del Proveedor</h3>
+                        <div style="margin-left:auto;display:flex;gap:6px">
+                            <button class="btn btn-sm btn-ghost" id="btnClearForm">
+                                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <polyline points="3 6 5 6 13 6" />
+                                    <path d="M14 6l-1 7H3L2 6" />
+                                    <path d="M6 6V4h4v2" />
+                                </svg>
+                                Limpiar
+                            </button>
+                            <button class="btn btn-sm btn-primary" id="btnSaveData" disabled>
+                                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M13 2H3a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V5l-3-3z" />
+                                    <path d="M11 2v4H5V2" />
+                                    <path d="M5 10h6" />
+                                </svg>
+                                Alta Proveedor
+                            </button>
+                        </div>
+                    </div>
+
+                    <form id="extractionForm" novalidate>
+                        <fieldset>
+                            <legend>Datos principales</legend>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="tipoDoc">Tipo Doc</label>
+                                    <select id="tipoDoc" name="tipoDoc" class="form-control">
+                                        <option value="29">CIF</option>
+                                        <option value="28">DNI</option>
+                                        <option value="31">NIE</option>
+                                        <option value="58">Otros</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="docId">Número (CIF / NIF)</label>
+                                    <input type="text" id="docId" name="docId" class="form-control" placeholder="Ej: B12345678">
+                                    <div class="field-validation"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="legalBusinessName">Razón social</label>
+                                <input type="text" id="legalBusinessName" name="legalBusinessName" class="form-control" placeholder="Ej: Empresa S.L.">
+                                <div class="field-validation"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="commercialName">Nombre comercial</label>
+                                    <input type="text" id="commercialName" name="commercialName" class="form-control" placeholder="Ej: Mi Empresa">
+                                    <div class="field-validation"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tipoProveedor">Tipo Proveedor</label>
+                                    <select id="tipoProveedor" name="tipoProveedor" class="form-control">
+                                        <option value="">— Sin asignar —</option>
+                                        <option value="323">Logística</option>
+                                        <option value="345">Materiales</option>
+                                        <option value="358">Regalos publicitarios</option>
+                                    </select>
+                                    <div class="field-validation"></div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset>
+                            <legend>Dirección</legend>
+                            <div class="form-group">
+                                <label for="address">Dirección</label>
+                                <textarea id="address" name="address" class="form-control" rows="2" placeholder="Ej: Calle Principal 123"></textarea>
+                                <div class="field-validation"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="city">Población</label>
+                                    <input type="text" id="city" name="city" class="form-control" placeholder="Ej: Madrid">
+                                    <div class="field-validation"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="postalCode">Código postal</label>
+                                    <input type="text" id="postalCode" name="postalCode" class="form-control" placeholder="Ej: 28001">
+                                    <div class="field-validation"></div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="provinciaId">Provincia</label>
+                                <select id="provinciaId" name="provinciaId" class="form-control">
+                                    <option value="">Seleccione una provincia...</option>
+                                </select>
+                                <div class="field-validation"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="observations">Observaciones</label>
+                                <textarea id="observations" name="observations" class="form-control" rows="2" placeholder="Notas adicionales"></textarea>
+                                <div class="field-validation"></div>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+
+                <!-- STEP 2: FACTURA -->
+                <div id="step2Content" class="step-content">
+                    <div class="panel-header" style="background:transparent; border-bottom:none; padding-bottom:0">
+                        <div style="margin-left:auto;display:flex;gap:6px">
+                            <button class="btn btn-sm btn-primary" id="btnSaveInvoice" disabled>
+                                <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M13 2H3a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V5l-3-3z" />
+                                    <path d="M11 2v4H5V2" />
+                                    <path d="M5 10h6" />
+                                </svg>
+                                Guardar Factura
+                            </button>
+                        </div>
+                    </div>
+
+                    <form id="invoiceForm" novalidate>
+                        <fieldset>
+                            <legend>Datos de la factura</legend>
+                            <div class="form-group">
+                                <label for="idSociedad">Sociedad</label>
+                                <select id="idSociedad" name="idSociedad" class="form-control">
+                                    <option value="">Seleccione sociedad...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="proveedorNombre">Proveedor</label>
+                                <div style="display:flex; gap:6px">
+                                    <input type="text" id="proveedorNombre" name="proveedorNombre" class="form-control" readonly placeholder="Cargue o seleccione proveedor">
+                                </div>
+                            </div>
+
+                            <div class="invoice-grid">
+                                <div class="form-group">
+                                    <label for="numInterno">Nº Interno</label>
+                                    <input type="text" id="numInterno" name="numInterno" class="form-control" readonly placeholder="Auto-generado">
+                                </div>
+                                <div class="form-group">
+                                    <label for="numFactura">Nº Factura Prov.</label>
+                                    <input type="text" id="numFactura" name="numFactura" class="form-control" placeholder="Ej: F-2024/001">
+                                </div>
+                                <div class="form-group">
+                                    <label for="tipoFactura">Tipo de factura</label>
+                                    <select id="tipoFactura" name="tipoFactura" class="form-control">
+                                        <option value="4" selected>Normal</option>
+                                        <option value="5">Otro tipo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fechaEmision">Fecha de emisión</label>
+                                    <input type="date" id="fechaEmision" name="fechaEmision" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="fechaEntrada">Fecha de imputación</label>
+                                    <input type="date" id="fechaEntrada" name="fechaEntrada" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="fechaVencimiento">Fecha de vencimiento</label>
+                                    <input type="date" id="fechaVencimiento" name="fechaVencimiento" class="form-control">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="concepto">Descripción</label>
+                                    <textarea id="concepto" name="concepto" class="form-control" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <div class="tabs-header">
+                            <div class="tab-item active" data-tab="lines">Líneas factura</div>
+                            <div class="tab-item" data-tab="vencimientos">Vencimientos</div>
+                        </div>
+                        
+                        <!-- TAB LÍNEAS -->
+                        <div id="tab-lines" class="tab-content active">
+                            <div class="lines-container">
+                                <table class="lines-table" id="linesTable">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 35px">#</th>
+                                            <th>Descripción</th>
+                                            <th style="width: 60px">U.M.</th>
+                                            <th style="width: 55px">Cant.</th>
+                                            <th style="width: 80px">Precio</th>
+                                            <th style="width: 65px">IVA%</th>
+                                            <th style="width: 100px">Importe</th>
+                                            <th style="width: 32px"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="linesTableBody">
+                                        <!-- Lines will be injected here -->
+                                    </tbody>
+                                </table>
+                                <div style="padding: 8px; border-top: 0.5px solid var(--border)">
+                                    <button type="button" class="btn btn-sm btn-ghost" id="btnAddLine" style="width: 100%; border: 1px dashed var(--border)">
+                                        + Añadir línea
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB VENCIMIENTOS -->
+                        <div id="tab-vencimientos" class="tab-content">
+                            <div class="lines-container">
+                                <table class="lines-table" id="vencTable">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 35px">Nº</th>
+                                            <th>Fecha Venc.</th>
+                                            <th style="width: 85px">Importe €</th>
+                                            <th style="width: 85px">Pagado €</th>
+                                            <th style="width: 100px">Fecha Pago</th>
+                                            <th>Tesorería</th>
+                                            <th>Forma de pago</th>
+                                            <th style="width: 32px"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vencTableBody">
+                                        <!-- Vencimientos will be injected here -->
+                                    </tbody>
+                                </table>
+                                <div style="padding: 8px; border-top: 0.5px solid var(--border)">
+                                    <button type="button" class="btn btn-sm btn-ghost" id="btnAddVencimiento" style="width: 100%; border: 1px dashed var(--border)">
+                                        + Añadir vencimiento
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="summary-container">
+                            <div class="summary-block">
+                                <!-- Place for retentions if needed later -->
+                            </div>
+                            <div class="summary-block">
+                                <div class="summary-row">
+                                    <span class="label">Base imponible</span>
+                                    <span class="value" id="sumBase">0,00 €</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span class="label">Cuota IVA</span>
+                                    <span class="value" id="sumIva">0,00 €</span>
+                                </div>
+                                <div class="summary-row total">
+                                    <span class="label">TOTAL FACTURA</span>
+                                    <span class="value" id="sumTotal">0,00 €</span>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="form-footer">
+                <div class="save-status" id="saveStatus" style="display:none"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="../js/resizable-panels.js"></script>
+    <script src="../js/bulk-processor.js"></script>
+    <script src="../js/invoice-viewer.js"></script>
+    <script src="../js/extraction-form.js"></script>
+    <script src="../js/extraction-controller.js"></script>
+</body>
+
+</html>

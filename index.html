@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facturas de proveedor</title>
+  <script>
+    document.documentElement.dataset.theme = localStorage.getItem('app-theme') || 'light';
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/facturas-proveedor.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/notifications.css" />
+  <link rel="stylesheet" href="css/invoice-detail.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+
+<body>
+  <div class="app">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <span class="topbar-title">Sociedad</span>
+      <select id="soc" aria-label="Seleccionar sociedad">
+        <option value="">— Seleccionar sociedad —</option>
+      </select>
+      <div class="topbar-right">
+        <button id="btn-theme-toggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Cambiar tema" title="Cambiar tema">
+          <span class="theme-icon" aria-hidden="true"></span>
+        </button>
+        <button id="btnAdminPanel" class="icon-toggle" type="button" aria-label="Administración" title="Administración" style="display:none;">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 2l7 4v6c0 5-3.5 9-7 10-3.5-1-7-5-7-10V6l7-4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M9.5 12.5l1.8 1.8 3.2-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button id="btnMindeeConfig" class="btn-buscar"
+          style="margin-right: 15px; background: linear-gradient(90deg, #0f766e 0%, #14b8a6 100%); border: none;">
+          Cuenta Mindee
+        </button>
+        <button id="btnShowDashboard" class="btn-buscar"
+          style="margin-right: 15px; background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%); border: none;">
+          Dashboard
+        </button>
+        <button id="btnDeleteInvoice" class="btn-buscar"
+          style="margin-right: 15px; background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%); border: none;">
+          Eliminar Factura
+        </button>
+        <label for="order">Ordenar por</label>
+        <select id="order">
+          <option value="fecha">Fecha imput.</option>
+          <option value="num">Nº factura</option>
+          <option value="total">Total</option>
+          <option value="proveedor">Proveedor</option>
+          <option value="base">B. imponible</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div id="notificationsBar" class="notifications-bar" style="display: none;">
+      <div class="notification-icon">🔔</div>
+      <div class="notification-content" id="notificationText"></div>
+      <button class="notification-close" id="btnCloseNotifications">×</button>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters">
+      <div class="chip on" data-f="all">Todas</div>
+      <div class="chip" data-f="pagado">Pagadas</div>
+      <div class="chip" data-f="pendiente">Pendientes</div>
+      <div class="chip" data-f="vencida">Vencidas</div>
+    </div>
+
+    <!-- BÚSQUEDA AVANZADA -->
+    <div class="search-bar" id="sbar">
+      <input type="text" id="srch" placeholder="Buscar por nº factura, proveedor o descripción..." />
+      <input type="number" id="fyear" placeholder="Año" min="2000" max="2099" style="width: 80px;" />
+      <!-- Mes / Trimestre megamenu -->
+      <div class="mstrim-wrap" id="mstrimWrap">
+        <button class="mstrim-trigger" id="mstrimTrigger" type="button">
+          <span id="mstrimLabel">Mes / Trimestre</span>
+          <span class="mstrim-arrow">▾</span>
+        </button>
+        <div class="mstrim-dropdown" id="mstrimDropdown">
+          <!-- Row: Mes -->
+          <div class="mstrim-row" id="rowMes">
+            <div class="mstrim-row-label">
+              <span>Mes</span>
+              <span class="mstrim-row-arrow">›</span>
+            </div>
+            <div class="mstrim-submenu" id="submenuMes">
+              <div class="mstrim-submenu-chips">
+                <div class="mstrim-chip" data-type="month" data-val="1">Enero</div>
+                <div class="mstrim-chip" data-type="month" data-val="2">Febrero</div>
+                <div class="mstrim-chip" data-type="month" data-val="3">Marzo</div>
+                <div class="mstrim-chip" data-type="month" data-val="4">Abril</div>
+                <div class="mstrim-chip" data-type="month" data-val="5">Mayo</div>
+                <div class="mstrim-chip" data-type="month" data-val="6">Junio</div>
+                <div class="mstrim-chip" data-type="month" data-val="7">Julio</div>
+                <div class="mstrim-chip" data-type="month" data-val="8">Agosto</div>
+                <div class="mstrim-chip" data-type="month" data-val="9">Septiembre</div>
+                <div class="mstrim-chip" data-type="month" data-val="10">Octubre</div>
+                <div class="mstrim-chip" data-type="month" data-val="11">Noviembre</div>
+                <div class="mstrim-chip" data-type="month" data-val="12">Diciembre</div>
+              </div>
+            </div>
+          </div>
+          <!-- Row: Trimestre -->
+          <div class="mstrim-row" id="rowTrim">
+            <div class="mstrim-row-label">
+              <span>Trimestre</span>
+              <span class="mstrim-row-arrow">›</span>
+            </div>
+            <div class="mstrim-submenu" id="submenuTrim">
+              <div class="mstrim-submenu-chips">
+                <div class="mstrim-chip" data-type="trim" data-val="1TR">1er Trimestre</div>
+                <div class="mstrim-chip" data-type="trim" data-val="2TR">2º Trimestre</div>
+                <div class="mstrim-chip" data-type="trim" data-val="3TR">3er Trimestre</div>
+                <div class="mstrim-chip" data-type="trim" data-val="4TR">4º Trimestre</div>
+              </div>
+            </div>
+          </div>
+          <!-- Footer -->
+          <div class="mstrim-footer">
+            <button class="mstrim-clear" id="mstrimClear" type="button">Limpiar selección</button>
+          </div>
+        </div>
+      </div>
+      <select id="ftipo">
+        <option value="">Todos los tipos</option>
+        <option value="Normal">Normal</option>
+        <option value="Otro tipo">Otro tipo</option>
+      </select>
+      <button class="btn-limpiar" id="btn-limpiar">Limpiar</button>
+      <button class="btn-buscar" id="btn-buscar">Buscar</button>
+    </div>
+
+    <!-- TABLA -->
+    <div class="tbl-wrap">
+      <table>
+        <colgroup>
+          <col style="width: 60px" />
+          <col style="width: 120px" />
+          <col style="width: 50px" />
+          <col style="width: 80px" />
+          <col style="width: 100px" />
+          <col style="width: 100px" />
+          <col style="width: 150px" />
+          <col />
+          <col style="width: 100px" />
+          <col style="width: 90px" />
+          <col style="width: 110px" />
+          <col style="width: 100px" />
+          <col style="width: 80px" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th data-sort="num">Nº fac <span class="sort-arrow" id="sa-num">↕</span></th>
+            <th data-sort="fecha">
+              F. imput. <span class="sort-arrow" id="sa-fecha">↕</span>
+            </th>
+            <th>Trim.</th>
+            <th>Nº f. prov.</th>
+            <th>F. f. prov.</th>
+            <th>Vencimiento</th>
+            <th data-sort="proveedor">
+              Proveedor <span class="sort-arrow" id="sa-proveedor">↕</span>
+            </th>
+            <th>Descripción</th>
+            <th class="r" data-sort="base">
+              B. impon. <span class="sort-arrow" id="sa-base">↕</span>
+            </th>
+            <th class="r">IVA + RE</th>
+            <th class="r" data-sort="total">
+              Total <span class="sort-arrow" id="sa-total">↕</span>
+            </th>
+            <th>Tipo</th>
+            <th class="c">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="empty" class="empty" style="display: none">
+        No se han encontrado facturas con los filtros seleccionados.
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <!-- PIE DE PAGINA (PAGINACIÓN + TOTALES) -->
+    <div class="pag-bar">
+      <div class="pag-left">
+        <div class="db-status-bar" id="db-status-bar">
+          <span class="db-status-indicator disconnected" id="db-status-indicator"></span>
+          <div class="db-status-info">
+            <span class="db-status-text" id="db-status-text">Comprobando...</span>
+            <span class="db-status-server" id="db-status-server">Buscando conexión</span>
+          </div>
+          <button class="btn-change-db" id="btn-change-db" style="display: none;">Cambiar</button>
+        </div>
+      </div>
+
+      <div class="totals" id="totals">
+        <div class="tc">
+          <div class="tc-l">B. imponible</div>
+          <div class="tc-v" id="tot-base">—</div>
+        </div>
+        <div class="tc">
+          <div class="tc-l">IVA + RE</div>
+          <div class="tc-v" id="tot-iva">—</div>
+        </div>
+        <div class="tc">
+          <div class="tc-l">Total</div>
+          <div class="tc-v" id="tot-total">—</div>
+        </div>
+        <div class="tc">
+          <div class="tc-l">Pendiente</div>
+          <div class="tc-v pend" id="tot-pend">—</div>
+        </div>
+      </div>
+
+      <span id="pag-info">Cargando...</span>
+    </div>
+  </div>
+
+  <!-- Modal Configuración Mindee -->
+  <div id="mindeeConfigModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 560px; height: auto; padding: 28px;">
+      <div class="modal-header">
+        <h2>Cuenta Mindee</h2>
+        <button id="btnCloseMindeeConfig" class="btn-close" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="mindeeConfigForm" style="display: grid; gap: 14px;">
+          <div class="form-group">
+            <label for="mindeeAccountName">Nombre de la cuenta</label>
+            <input id="mindeeAccountName" type="text" placeholder="Mi cuenta Mindee" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="mindeeApiKey">API Key</label>
+            <input id="mindeeApiKey" type="text" placeholder="md_..." autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="mindeeModelId">Model ID</label>
+            <input id="mindeeModelId" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="mindeeEndpoint">Endpoint / nombre del modelo</label>
+            <input id="mindeeEndpoint" type="text" placeholder="Opcional, ej: lector-formacion-v1" autocomplete="off">
+          </div>
+          <div id="mindeeConfigStatus" style="min-height: 20px; color: var(--text-muted); font-size: 0.9rem;"></div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px;">
+            <button id="btnClearMindeeConfig" type="button" class="btn-limpiar">Usar configuración BD</button>
+            <button type="submit" class="btn-buscar">Guardar cuenta Mindee</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Administración -->
+  <div id="adminModal" class="modal" style="display: none;">
+    <div class="modal-content admin-modal-content">
+      <div class="admin-header">
+        <div>
+          <p class="admin-eyebrow">Administración</p>
+          <h1 class="admin-title">Usuarios y auditoría</h1>
+        </div>
+        <button id="btnCloseAdmin" class="btn-close" type="button" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="admin-tabs" role="tablist" aria-label="Secciones de administración">
+        <button class="admin-tab active" type="button" data-admin-tab="users">Usuarios</button>
+        <button class="admin-tab" type="button" data-admin-tab="audit">Auditoría</button>
+      </div>
+
+      <div class="admin-body">
+        <section id="adminUsersPanel" class="admin-panel active">
+          <div class="admin-grid">
+            <div class="admin-list">
+              <div class="admin-section-title">Listado</div>
+              <div id="adminUsersList" class="admin-table-wrap"></div>
+            </div>
+
+            <form id="adminUserForm" class="admin-form">
+              <div class="admin-section-title">Editar usuario</div>
+              <input type="hidden" id="adminUserOriginal" />
+
+              <label for="adminUserName">Usuario</label>
+              <input id="adminUserName" type="text" autocomplete="off" />
+
+              <label for="adminFullName">Nombre completo</label>
+              <input id="adminFullName" type="text" autocomplete="off" />
+
+              <label for="adminUserRole">Rol</label>
+              <select id="adminUserRole">
+                <option value="Administrador">Administrador</option>
+                <option value="Contable">Contable</option>
+              </select>
+
+              <label class="admin-check">
+                <input id="adminUserActive" type="checkbox" checked />
+                <span>Cuenta habilitada</span>
+              </label>
+
+              <div class="admin-form-actions">
+                <button id="adminUserReset" type="button" class="btn-limpiar">Nuevo</button>
+                <button id="adminUserSave" type="submit" class="btn-buscar">Guardar</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section id="adminAuditPanel" class="admin-panel">
+          <div class="admin-toolbar">
+            <label for="adminAuditLimit">Últimos</label>
+            <select id="adminAuditLimit">
+              <option value="25">25</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+              <option value="250">250</option>
+            </select>
+            <button id="adminAuditRefresh" type="button" class="btn-limpiar">Actualizar</button>
+          </div>
+          <div id="adminAuditList" class="admin-table-wrap"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Extracción -->
+  <div id="extractionModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Extracción de Factura con IA</h2>
+        <button id="btnCloseModal" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <iframe id="extractionFrame" src="views/extraction-view.html" frameborder="0"
+          style="width: 100%; height: 80vh;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Dashboard -->
+  <div id="dashboardModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="dashboard-wrapper">
+        <!-- Encabezado -->
+        <div class="dashboard-header">
+          <div>
+            <p class="dashboard-eyebrow" id="dash-exercise">Ejercicio 2024</p>
+            <h1 class="dashboard-title title">Dashboard de gastos</h1>
+          </div>
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="mstrim-wrap" id="dashMstrimWrap">
+              <button class="mstrim-trigger" id="dashMstrimTrigger" type="button" style="border: none; font-weight: 500;">
+                <span id="dashMstrimLabel">Todo el año</span>
+                <span class="mstrim-arrow">▾</span>
+              </button>
+              <div class="mstrim-dropdown" id="dashMstrimDropdown">
+                <div class="mstrim-row">
+                  <div class="mstrim-row-label"><span>Mes</span><span class="mstrim-row-arrow">›</span></div>
+                  <div class="mstrim-submenu">
+                    <div class="mstrim-submenu-chips">
+                      <div class="dash-mstrim-chip" data-type="month" data-val="1">Enero</div>
+                      <div class="dash-mstrim-chip" data-type="month" data-val="2">Febrero</div>
+                      <div class="dash-mstrim-chip" data-type="month" data-val="3">Marzo</div>
+                      <div class="dash-mstrim-chip" data-type="month" data-val="4">Abril</div>
+                      <div class="dash-mstrim-chip" data-type="month" data-val="5">Mayo</div>
+                      <div class="dash-mstrim-chip" data-type="month" data-val="6">Junio</div>
+                      <div class="dash-mstrim-chip" data-type="month" data-val="7">Julio</div>
+                      <div class="dash-mstrim-chip" data-type="month" data-val="8">Agosto</div>
+                      <div class="dash-mstrim-chip" data-type="month" data-val="9">Septiembre</div>
+                      <div class="dash-mstrim-chip" data-type="month" data-val="10">Octubre</div>
+                      <div class="dash-mstrim-chip" data-type="month" data-val="11">Noviembre</div>
+                      <div class="dash-mstrim-chip" data-type="month" data-val="12">Diciembre</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="mstrim-row">
+                  <div class="mstrim-row-label"><span>Trimestre</span><span class="mstrim-row-arrow">›</span></div>
+                  <div class="mstrim-submenu">
+                    <div class="mstrim-submenu-chips">
+                      <div class="dash-mstrim-chip" data-type="trim" data-val="1TR">1er Trimestre</div>
+                      <div class="dash-mstrim-chip" data-type="trim" data-val="2TR">2º Trimestre</div>
+                      <div class="dash-mstrim-chip" data-type="trim" data-val="3TR">3er Trimestre</div>
+                      <div class="dash-mstrim-chip" data-type="trim" data-val="4TR">4º Trimestre</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="mstrim-footer">
+                  <button class="mstrim-clear" id="dashMstrimClear" type="button">Limpiar selección</button>
+                </div>
+              </div>
+            </div>
+            <button id="btnExportCSV" class="dashboard-badge"
+              style="background: #059669; color: white; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: 500;">
+              📥 Exportar CSV
+            </button>
+            <span class="dashboard-badge">Actualizado hoy</span>
+            <button id="btnCloseDashboard" class="btn-close"
+              style="position: static; font-size: 1.5rem;">&times;</button>
+          </div>
+        </div>
+
+        <!-- Tarjetas métricas -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <p class="metric-label label">Total gasto</p>
+            <p class="metric-value title" id="stat-total">€0</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-label label">Gasto sin IVA</p>
+            <p class="metric-value title" id="stat-base">€0</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-label label">IVA</p>
+            <p class="metric-value title" id="stat-iva">€0</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-label label">Documentos</p>
+            <p class="metric-value title" id="stat-docs">0</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-label label">Proveedores</p>
+            <p class="metric-value title" id="stat-provs">0</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-label label">Media mensual</p>
+            <p class="metric-value title" id="stat-avg">€0</p>
+          </div>
+        </div>
+
+        <!-- Fila superior: donut + barras horizontales -->
+        <div class="charts-top">
+          <!-- Distribución por tipo -->
+          <div class="card">
+            <p class="card-title">Distribución por tipo de documento</p>
+            <div id="types-legend" class="legend"></div>
+            <div class="chart-wrap" style="height: 220px;">
+              <canvas id="chartTypes"></canvas>
+            </div>
+          </div>
+
+          <!-- Top proveedores -->
+          <div class="card">
+            <p class="card-title">Top proveedores (por importe)</p>
+            <div class="chart-wrap" style="height: 240px;">
+              <canvas id="chartProviders"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evolución mensual -->
+        <div class="card">
+          <div class="chart-header">
+            <p class="card-title" style="margin-bottom:0;">Evolución de gasto mensual (€)</p>
+            <div class="legend" style="margin-bottom:0;">
+              <span class="legend-item"><span class="legend-line" style="background:#185FA5;"></span><span
+                  id="label-curr-year">Actual</span></span>
+              <span class="legend-item"><span class="legend-line"
+                  style="background:#B4B2A9; border-top: 2px dashed #B4B2A9; height:0;"></span><span
+                  id="label-prev-year">Anterior</span></span>
+            </div>
+          </div>
+          <div class="chart-wrap" style="height: 220px;">
+            <canvas id="chartMonthly"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Detalle de Factura -->
+  <div id="invoiceDetailModal" class="modal" style="display: none;">
+    <div class="modal-content detail-modal">
+      <div class="modal-header">
+        <h2>Detalle de Factura</h2>
+        <button id="btnCloseDetail" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-header-grid">
+          <div class="detail-group">
+            <label>Proveedor</label>
+            <div id="det-proveedor" class="det-val">—</div>
+          </div>
+          <div class="detail-group">
+            <label>Nº Factura</label>
+            <div id="det-num" class="det-val">—</div>
+          </div>
+          <div class="detail-group">
+            <label>Fecha</label>
+            <div id="det-fecha" class="det-val">—</div>
+          </div>
+          <div class="detail-group">
+            <label>Vencimiento</label>
+            <div id="det-vencimiento" class="det-val">—</div>
+          </div>
+          <div class="detail-group">
+            <label>Tipo</label>
+            <div id="det-tipo" class="det-val">—</div>
+          </div>
+          <div class="detail-group">
+            <label>Estado</label>
+            <div id="det-estado" class="det-val">—</div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Líneas de la Factura</h3>
+          <div class="detail-tbl-wrap">
+            <table class="detail-table">
+              <colgroup>
+                <col style="width: 70px" />
+                <col />
+                <col style="width: 100px" />
+                <col style="width: 110px" />
+                <col style="width: 80px" />
+                <col style="width: 110px" />
+                <col style="width: 110px" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Orden</th>
+                  <th>Concepto</th>
+                  <th class="r">Cantidad</th>
+                  <th class="r">Precio</th>
+                  <th class="r">% IVA</th>
+                  <th class="r">Base</th>
+                  <th class="r">Total</th>
+                </tr>
+              </thead>
+              <tbody id="det-tbody">
+                <!-- Lines go here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="detail-section" id="det-obs-section">
+          <h3>Observaciones</h3>
+          <div id="det-observaciones" class="det-obs-box">—</div>
+        </div>
+
+        <div class="detail-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3>Vencimientos y Pagos</h3>
+            <div class="venc-totals">
+              <span class="venc-total-item">Total Pagado: <strong id="det-total-pagado">0,00 €</strong></span>
+              <span class="venc-total-item">Pendiente: <strong id="det-total-pendiente" class="pend">0,00
+                  €</strong></span>
+            </div>
+          </div>
+
+          <div class="detail-tbl-wrap" style="margin-bottom: 20px;">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>Fecha Venc.</th>
+                  <th class="r">Importe</th>
+                  <th class="r">Pagado</th>
+                  <th>Fecha Pago</th>
+                  <th>Forma Pago</th>
+                  <th>Tesorería</th>
+                  <th class="c">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="det-venc-tbody">
+                <!-- Vencimientos go here -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="add-payment-box">
+            <h4>Añadir nuevo pago / vencimiento</h4>
+            <div class="add-payment-form">
+              <div class="form-group">
+                <label>Fecha Venc.</label>
+                <input type="date" id="add-pay-venc">
+              </div>
+              <div class="form-group">
+                <label>Fecha Pago</label>
+                <input type="date" id="add-pay-fecha">
+              </div>
+              <div class="form-group">
+                <label>Importe</label>
+                <input type="text" id="add-pay-importe" placeholder="0,00" inputmode="decimal">
+              </div>
+              <div class="form-group">
+                <label>Forma Pago</label>
+                <select id="add-pay-forma">
+                  <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+                  <option value="Cheque">Cheque</option>
+                  <option value="Contado">Contado</option>
+                  <option value="E.C. ADEUDO EN CUENTA">E.C. ADEUDO EN CUENTA</option>
+                  <option value="Pagaré">Pagaré</option>
+                  <option value="TRANSFERENCIA BANCARIA C/C BANKINTER">BANCARIA BANKINTER</option>
+                  <option value="TRANSFERENCIA BANCARIA C/C SANTANDER">BANCARIA SANTANDER</option>
+                  <option value="VISA">VISA</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Tesorería</label>
+                <select id="add-pay-tesoreria">
+                  <option value="Banco">Banco</option>
+                  <option value="Caja">Caja</option>
+                  <option value="Prueba Inteco">Prueba Inteco</option>
+                  <option value="Prueba Inteco 2">Prueba Inteco 2</option>
+                </select>
+              </div>
+              <button id="btn-add-payment" class="btn-primary">Añadir Pago</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/facturas-proveedor.js"></script>
+  <script src="js/dashboard.js"></script>
+
+  <!-- Botón Flotante: Alta Facturas IA -->
+  <button id="btnAltaFacturasIA" class="fab-alta-facturas" title="Alta Facturas con IA">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+      <path d="M12 5v14M5 12h14"></path>
+    </svg>
+    Alta Facturas IA
+  </button>
+
+  <!-- Modal de Confirmación Personalizado -->
+  <div id="customConfirmModal" class="modal" style="display: none; z-index: 2000;">
+    <div class="modal-content" style="max-width: 400px; height: auto; padding: 25px; text-align: center;">
+      <h3 style="margin-bottom: 15px;">¿Estás seguro?</h3>
+      <p id="customConfirmMessage" style="margin-bottom: 25px; color: var(--text-muted);">¿Seguro que quieres eliminar este pago?
+      </p>
+      <div style="display: flex; gap: 15px; justify-content: center;">
+        <button id="btnConfirmCancel" class="btn"
+          style="background: var(--surface2); color: var(--text); padding: 10px 20px;">Cancelar</button>
+        <button id="btnConfirmOk" class="btn btn-primary"
+          style="background: #ef4444; padding: 10px 20px;">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+
+</html>

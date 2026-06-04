@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - ExtractionForm Component</title>
+    <link rel="stylesheet" href="css/extraction.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 6px;
+        }
+        .test-controls button {
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .test-output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>ExtractionForm Component Test</h1>
+        
+        <div class="test-controls">
+            <h3>Test Controls</h3>
+            <button class="btn btn-primary" onclick="testInitialize()">1. Initialize Form</button>
+            <button class="btn btn-primary" onclick="testPopulateFields()">2. Populate with Sample Data</button>
+            <button class="btn btn-primary" onclick="testGetFormData()">3. Get Form Data</button>
+            <button class="btn btn-primary" onclick="testValidate()">4. Validate Form</button>
+            <button class="btn btn-secondary" onclick="testClear()">Clear Form</button>
+            <button class="btn btn-secondary" onclick="testInvalidData()">Test Invalid Data</button>
+        </div>
+        
+        <div class="test-output" id="testOutput">
+Test output will appear here...
+        </div>
+        
+        <hr style="margin: 30px 0;">
+        
+        <!-- Form Panel -->
+        <div class="form-panel" style="border: 1px solid #ddd; border-radius: 8px;">
+            <div class="form-header">
+                <h3>Datos Extraídos</h3>
+                <div class="form-actions">
+                    <button id="btnClearForm" class="btn btn-secondary-small">🗑️ Limpiar</button>
+                    <button id="btnSaveData" class="btn btn-primary-small" disabled>💾 Guardar</button>
+                </div>
+            </div>
+            
+            <div class="form-content" id="formContent">
+                <form id="extractionForm">
+                    <!-- Sección: Información del Documento -->
+                    <fieldset class="form-section">
+                        <legend>Información del Documento</legend>
+                        
+                        <div class="form-group">
+                            <label for="documentType">Tipo de Documento *</label>
+                            <input type="text" id="documentType" name="documentType" 
+                                   class="form-control" placeholder="Ej: Factura" required>
+                            <div class="field-validation"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="invoiceNumber">Número de Factura *</label>
+                            <input type="text" id="invoiceNumber" name="invoiceNumber" 
+                                   class="form-control" placeholder="Ej: INV-2024-001" required>
+                            <div class="field-validation"></div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Sección: Datos del Proveedor -->
+                    <fieldset class="form-section">
+                        <legend>Datos del Proveedor</legend>
+                        
+                        <div class="form-group">
+                            <label for="legalBusinessName">Razón Social *</label>
+                            <input type="text" id="legalBusinessName" name="legalBusinessName" 
+                                   class="form-control" placeholder="Ej: Empresa S.L." required>
+                            <div class="field-validation"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="commercialName">Nombre Comercial</label>
+                            <input type="text" id="commercialName" name="commercialName" 
+                                   class="form-control" placeholder="Ej: Mi Empresa">
+                            <div class="field-validation"></div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Sección: Dirección -->
+                    <fieldset class="form-section">
+                        <legend>Dirección</legend>
+                        
+                        <div class="form-group">
+                            <label for="address">Dirección</label>
+                            <textarea id="address" name="address" class="form-control" 
+                                      rows="2" placeholder="Ej: Calle Principal 123"></textarea>
+                            <div class="field-validation"></div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="city">Ciudad</label>
+                                <input type="text" id="city" name="city" 
+                                       class="form-control" placeholder="Ej: Madrid">
+                                <div class="field-validation"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="postalCode">Código Postal</label>
+                                <input type="text" id="postalCode" name="postalCode" 
+                                       class="form-control" placeholder="Ej: 28001">
+                                <div class="field-validation"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="country">País *</label>
+                            <select id="country" name="country" class="form-control" required>
+                                <option value="">Seleccione un país</option>
+                                <option value="ES">España</option>
+                                <option value="FR">Francia</option>
+                                <option value="DE">Alemania</option>
+                                <option value="IT">Italia</option>
+                                <option value="PT">Portugal</option>
+                                <option value="GB">Reino Unido</option>
+                                <option value="US">Estados Unidos</option>
+                                <option value="MX">México</option>
+                                <option value="AR">Argentina</option>
+                                <option value="CL">Chile</option>
+                                <option value="CO">Colombia</option>
+                            </select>
+                            <div class="field-validation"></div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Resumen de Validación -->
+                    <div id="validationSummary" class="validation-summary" style="display: none;">
+                        <div class="validation-errors" id="validationErrors"></div>
+                        <div class="validation-warnings" id="validationWarnings"></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/extraction-form.js"></script>
+    <script>
+        let extractionForm;
+        
+        function log(message) {
+            const output = document.getElementById('testOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function testInitialize() {
+            log('=== Test 1: Initialize Form ===');
+            try {
+                extractionForm = new ExtractionForm();
+                extractionForm.initialize();
+                
+                // Register field change callback
+                extractionForm.onFieldChange((field, value) => {
+                    log(`Field changed: ${field} = "${value}"`);
+                });
+                
+                log('✅ Form initialized successfully');
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        function testPopulateFields() {
+            log('\n=== Test 2: Populate Fields ===');
+            if (!extractionForm) {
+                log('❌ Form not initialized. Run Test 1 first.');
+                return;
+            }
+            
+            const sampleData = {
+                documentType: 'Factura',
+                invoiceNumber: 'INV-2024-001',
+                legalBusinessName: 'Empresa Ejemplo S.L.',
+                commercialName: 'Ejemplo Corp',
+                address: 'Calle Mayor 123, 2º A',
+                city: 'Madrid',
+                postalCode: '28001',
+                country: 'ES'
+            };
+            
+            try {
+                extractionForm.populateFields(sampleData);
+                log('✅ Fields populated successfully');
+                log(`Data: ${JSON.stringify(sampleData, null, 2)}`);
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        function testGetFormData() {
+            log('\n=== Test 3: Get Form Data ===');
+            if (!extractionForm) {
+                log('❌ Form not initialized. Run Test 1 first.');
+                return;
+            }
+            
+            try {
+                const data = extractionForm.getFormData();
+                log('✅ Form data retrieved successfully');
+                log(`Data: ${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        function testValidate() {
+            log('\n=== Test 4: Validate Form ===');
+            if (!extractionForm) {
+                log('❌ Form not initialized. Run Test 1 first.');
+                return;
+            }
+            
+            try {
+                const result = extractionForm.validate();
+                log('✅ Validation completed');
+                log(`Valid: ${result.valid}`);
+                log(`Errors: ${result.errors.length}`);
+                log(`Warnings: ${result.warnings.length}`);
+                
+                if (result.errors.length > 0) {
+                    log('\nErrors:');
+                    result.errors.forEach(err => {
+                        log(`  - ${err.field}: ${err.message}`);
+                    });
+                }
+                
+                if (result.warnings.length > 0) {
+                    log('\nWarnings:');
+                    result.warnings.forEach(warn => {
+                        log(`  - ${warn.field}: ${warn.message}`);
+                    });
+                }
+                
+                // Show validation feedback in UI
+                extractionForm.showValidationFeedback(result);
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        function testClear() {
+            log('\n=== Test: Clear Form ===');
+            if (!extractionForm) {
+                log('❌ Form not initialized. Run Test 1 first.');
+                return;
+            }
+            
+            try {
+                extractionForm.clear();
+                log('✅ Form cleared successfully');
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        function testInvalidData() {
+            log('\n=== Test: Invalid Data ===');
+            if (!extractionForm) {
+                log('❌ Form not initialized. Run Test 1 first.');
+                return;
+            }
+            
+            const invalidData = {
+                documentType: 'A'.repeat(100), // Exceeds max length
+                invoiceNumber: '', // Required field empty
+                legalBusinessName: 'Test Company',
+                commercialName: '',
+                address: '',
+                city: '',
+                postalCode: '1234', // Invalid format for ES
+                country: 'ES'
+            };
+            
+            try {
+                extractionForm.populateFields(invalidData);
+                log('✅ Invalid data populated');
+                
+                const result = extractionForm.validate();
+                log(`Validation result: ${result.valid ? 'VALID' : 'INVALID'}`);
+                log(`Errors: ${result.errors.length}, Warnings: ${result.warnings.length}`);
+                
+                extractionForm.showValidationFeedback(result);
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        // Auto-initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            log('Page loaded. Click "1. Initialize Form" to start testing.');
+        });
+    </script>
+</body>
+</html>

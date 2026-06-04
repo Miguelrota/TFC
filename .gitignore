@@ -1,0 +1,14 @@
+/target/
+/output/
+node_modules/
+dist/
+scratch/
+.vscode/
+Microsoft/
+mindee_line_debug.json
+.env
+*.log
+/.m2/
+/config/application-sqlserver.properties
+/config/application-local.properties
+.~lock.*

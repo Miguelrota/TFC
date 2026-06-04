@@ -1,0 +1,140 @@
+/* --- Estilos para el Dashboard Premium --- */
+
+#dashboardModal .modal-content {
+    background: var(--bg);
+    color: var(--text);
+    max-width: 1000px;
+    height: auto;
+    max-height: 95vh;
+    overflow-y: auto;
+    border-radius: 12px;
+}
+
+.dashboard-wrapper {
+    width: 100%;
+    padding: 2rem;
+    color: var(--text);
+}
+
+.dashboard-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 0.5px solid var(--border-med);
+}
+
+.dashboard-eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.dashboard-title {
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.dashboard-badge {
+    font-size: 12px;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    padding: 4px 10px;
+    border-radius: 8px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+}
+
+.metric-card {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1rem;
+    border: 0.5px solid var(--border);
+}
+
+.metric-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.metric-value {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.charts-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+@media (max-width: 600px) {
+    .charts-top { grid-template-columns: 1fr; }
+}
+
+.card {
+    background: var(--surface);
+    border: 0.5px solid var(--border-med);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
+.card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 14px;
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.legend-line {
+    width: 22px;
+    height: 2px;
+    display: inline-block;
+}
+
+.chart-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}

@@ -1,0 +1,55 @@
+{
+  "name": "facturas-gforma",
+  "version": "1.0.0",
+  "description": "Sistema de extracción automática de datos de facturas mediante inteligencia artificial usando Azure Form Recognizer.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "mindee": "^5.2.0",
+    "mssql": "^12.3.1",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "electron": "^41.2.1",
+    "electron-builder": "^26.8.1",
+    "jest": "^30.4.2"
+  },
+  "build": {
+    "appId": "com.inteco.facturas",
+    "productName": "Inteco Ingenieria Avanzada SL",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Facturas GForma",
+      "artifactName": "FacturasGForma_Setup_${version}.${ext}"
+    },
+    "extraResources": [
+      ".env",
+      "Config.xml",
+      "Fondos/**"
+    ]
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  }
+}

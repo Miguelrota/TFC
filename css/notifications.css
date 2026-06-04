@@ -1,0 +1,55 @@
+.notifications-bar {
+    background: var(--warn-bg);
+    border: 1px solid var(--border-med);
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    animation: slideDown 0.3s ease-out;
+}
+
+.notification-icon {
+    font-size: 18px;
+}
+
+.notification-content {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.notification-close {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.notification-close:hover {
+    color: var(--text);
+}
+
+.notification-link {
+    color: var(--accent);
+    text-decoration: underline;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
