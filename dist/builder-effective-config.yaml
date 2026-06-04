@@ -1,0 +1,20 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.inteco.facturas
+productName: Inteco Ingenieria Avanzada SL
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  shortcutName: Facturas GForma
+  artifactName: FacturasGForma_Setup_${version}.${ext}
+extraResources:
+  - filter:
+      - .env
+      - Config.xml
+      - Fondos/**
+files: []
+electronVersion: 41.2.1

@@ -1,11 +1,11 @@
 /target/
 /output/
 node_modules/
-dist/
 scratch/
 .vscode/
 Microsoft/
 mindee_line_debug.json
+dist/win-unpacked/
 .env
 *.log
 /.m2/
