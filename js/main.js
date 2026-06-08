@@ -299,7 +299,6 @@ class MainInterface {
     this.btnMindeeConfig = document.getElementById('btnMindeeConfig');
     this.btnCloseMindeeConfig = document.getElementById('btnCloseMindeeConfig');
     this.mindeeConfigForm = document.getElementById('mindeeConfigForm');
-    this.btnClearMindeeConfig = document.getElementById('btnClearMindeeConfig');
     this.mindeeConfigStatus = document.getElementById('mindeeConfigStatus');
 
     if (!this.mindeeConfigModal || !this.btnMindeeConfig || !this.mindeeConfigForm) return;
@@ -320,12 +319,6 @@ class MainInterface {
       event.preventDefault();
       await this.saveMindeeConfig();
     });
-
-    if (this.btnClearMindeeConfig) {
-      this.btnClearMindeeConfig.addEventListener('click', async () => {
-        await this.clearMindeeConfig();
-      });
-    }
   }
 
   async openMindeeConfig() {

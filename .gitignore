@@ -6,6 +6,10 @@ scratch/
 Microsoft/
 mindee_line_debug.json
 dist/win-unpacked/
+dist/*.exe
+dist/*.blockmap
+dist/builder-*.yml
+dist/builder-*.yaml
 .env
 *.log
 /.m2/

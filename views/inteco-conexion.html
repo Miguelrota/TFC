@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -479,7 +479,7 @@
     <div class="divider"></div>
 
     <div class="actions">
-      <button class="btn-save" onclick="saveConfig()">
+      <button class="btn-save" id="btn-save-config" onclick="saveConfig()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Guardar
       </button>
@@ -493,26 +493,6 @@
       <a href="https://www.intecoingenieria.com" target="_blank">www.intecoingenieria.com</a>
     </div>
 
-  </div>
-
-  <!-- MODAL SELECCIONAR CUENTA -->
-  <div id="account-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Seleccionar Cuenta</h2>
-      </div>
-      <div class="modal-body">
-        <p>Se han detectado múltiples cuentas de Mindee registradas en la base de datos. Por favor, elige la cuenta activa que deseas utilizar:</p>
-        <div class="modal-select-wrap">
-          <select id="account-select"></select>
-          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-save" id="btn-confirm-account" style="margin: 0; width: 100%;">Confirmar</button>
-        <button class="btn-cancel" id="btn-close-account" style="margin: 0; width: 100%;">Cancelar</button>
-      </div>
-    </div>
   </div>
 
   <!-- MODAL SELECCIONAR MODELO -->
@@ -583,7 +563,7 @@
       processSelect.innerHTML = '<option value="">Sin perfil seleccionado</option>';
 
       if (!server || !database) {
-        currentEl.textContent = 'Selecciona una conexiÃ³n y una base de datos para cargar perfiles Mindee.';
+        currentEl.textContent = 'Selecciona una conexión y una base de datos para cargar perfiles Mindee.';
         return;
       }
 
@@ -689,7 +669,7 @@
       const selected = getSelectedMindeeProfile();
       currentEl.textContent = selected
         ? `Activo: ${selected.label}`
-        : 'No se ha seleccionado ningÃºn perfil Mindee.';
+        : 'No se ha seleccionado ningún perfil Mindee.';
     }
 
     (function() {
@@ -707,7 +687,10 @@
       document.addEventListener('mouseup', () => { dragging = false; });
     })();
 
-    document.getElementById('mindee-process-select').addEventListener('change', updateMindeeCurrent);
+    const mindeeProcessSelect = document.getElementById('mindee-process-select');
+    if (mindeeProcessSelect) {
+      mindeeProcessSelect.addEventListener('change', updateMindeeCurrent);
+    }
     document.getElementById('conn-select').addEventListener('change', () => loadMindeeProfiles());
     document.getElementById('db-name').addEventListener('blur', () => loadMindeeProfiles());
 
@@ -755,7 +738,7 @@
       }
 
       statusEl.className = 'test-status show testing';
-      innerEl.innerHTML  = '<div class="spinner"></div><span>Probando conexión...</span>';
+        innerEl.innerHTML  = '<div class="spinner"></div><span>Probando conexión...</span>';
 
       try {
         const res = await window.api.invoke('db:testConnection', { server, database });
@@ -773,6 +756,39 @@
       setTimeout(() => statusEl.className = 'test-status', 6000);
     }
 
+    function getMainSaveButton() {
+      return document.getElementById('btn-save-config') || document.querySelector('.actions .btn-save');
+    }
+
+    function setMainSaveButtonState(btn, { label, busy = false, enabled = true, background = '' } = {}) {
+      if (!btn) return;
+      if (typeof label === 'string') btn.innerHTML = label;
+      btn.style.opacity = busy ? '0.85' : '1';
+      btn.disabled = !enabled;
+      btn.style.background = background;
+    }
+
+    async function invokeWithTimeout(channel, data, timeoutMs = 15000) {
+      const api = window.api;
+      if (!api || typeof api.invoke !== 'function') {
+        throw new Error('La API de Electron no está disponible.');
+      }
+
+      let timerId;
+      try {
+        return await Promise.race([
+          api.invoke(channel, data),
+          new Promise((_, reject) => {
+            timerId = setTimeout(() => {
+              reject(new Error(`Tiempo de espera agotado al ejecutar ${channel}.`));
+            }, timeoutMs);
+          })
+        ]);
+      } finally {
+        if (timerId) clearTimeout(timerId);
+      }
+    }
+
     // Global connection state to share across modal confirmation steps
     let pendingConfig = {
       server: '',
@@ -788,16 +804,23 @@
     async function saveConfig() {
       const sel    = document.getElementById('conn-select');
       const dbName = document.getElementById('db-name').value.trim();
-      const btn    = document.querySelector('.btn-save');
+      const btn    = getMainSaveButton();
 
       if (!sel.value) {
         alert('Añade y selecciona un servidor primero');
         return;
       }
 
-      btn.innerHTML  = '<div class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:white;"></div><span>Verificando...</span>';
-      btn.style.opacity = '0.85';
-      btn.disabled   = true;
+      if (!btn) {
+        alert('No se pudo localizar el botón de guardado.');
+        return;
+      }
+
+      setMainSaveButtonState(btn, {
+        label: '<div class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:white;"></div><span>Verificando...</span>',
+        busy: true,
+        enabled: false
+      });
 
       const conexiones = Array.from(sel.options).map(o => o.value).filter(Boolean);
       
@@ -818,75 +841,14 @@
         pendingConfig.idModelIDActual = selectedMindee.idModelIDActual;
         pendingConfig.idApiKeyActual = selectedMindee.idApiKeyActual;
         pendingConfig.idProcesoActual = selectedMindee.idProcesoActual;
-        await finalizeSave(btn);
-        return;
       }
 
-      try {
-        // Step 1: Fetch all accounts
-        const accRes = await window.api.invoke('db:getAccounts', { server: sel.value, database: dbName });
-        
-        if (accRes.ok && accRes.accounts) {
-          if (accRes.accounts.length === 0) {
-            alert('⚠️ No se ha encontrado ninguna cuenta de Mindee registrada en la base de datos central. Se guardará la conexión en modo offline / sin perfil de Mindee.');
-            await finalizeSave(btn);
-            return;
-          }
-
-          if (accRes.accounts.length === 1) {
-            // Only 1 account, auto-select it and proceed to models
-            pendingConfig.idCuentaActual = accRes.accounts[0].IdCuenta;
-            await proceedToModels(btn);
-          } else {
-            // Multiple accounts: show accounts modal
-            const accSelect = document.getElementById('account-select');
-            accSelect.innerHTML = '';
-            accRes.accounts.forEach(acc => {
-              const name = acc.NombreCuenta || 'Sin Nombre';
-              const email = acc.CorreoCuenta ? ` (${acc.CorreoCuenta})` : '';
-              accSelect.add(new Option(`${name}${email}`, acc.IdCuenta));
-            });
-            document.getElementById('account-modal').style.display = 'flex';
-            
-            // Reset main button state
-            btn.innerHTML = '<span>Guardar</span>';
-            btn.style.opacity = '1';
-            btn.disabled = false;
-          }
-        } else {
-          // No accounts or database failed, save general config without profile
-          alert('⚠️ Error al conectar con la base de datos para recuperar perfiles: ' + (accRes.error || 'Conexión fallida.'));
-          await finalizeSave(btn);
-        }
-      } catch (err) {
-        alert('Error al verificar cuentas: ' + err.message);
-        btn.innerHTML = '<span>Guardar</span>';
-        btn.style.opacity = '1';
-        btn.disabled = false;
-      }
+      await finalizeSave(btn);
     }
-
-    // Modal listeners
-    document.getElementById('btn-close-account').addEventListener('click', () => {
-      document.getElementById('account-modal').style.display = 'none';
-    });
-
-    document.getElementById('btn-confirm-account').addEventListener('click', async () => {
-      document.getElementById('account-modal').style.display = 'none';
-      const accSelect = document.getElementById('account-select');
-      pendingConfig.idCuentaActual = accSelect.value;
-      
-      const btn = document.querySelector('.btn-save');
-      btn.innerHTML  = '<div class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:white;"></div><span>Verificando...</span>';
-      btn.style.opacity = '0.85';
-      btn.disabled   = true;
-
-      await proceedToModels(btn);
-    });
 
     async function proceedToModels(btn) {
       try {
-        const modRes = await window.api.invoke('db:getModels', {
+        const modRes = await invokeWithTimeout('db:getModels', {
           server: pendingConfig.server,
           database: pendingConfig.database,
           idCuenta: pendingConfig.idCuentaActual
@@ -922,9 +884,11 @@
         }
       } catch (err) {
         alert('Error al recuperar modelos: ' + err.message);
-        btn.innerHTML = '<span>Guardar</span>';
-        btn.style.opacity = '1';
-        btn.disabled = false;
+        setMainSaveButtonState(btn, {
+          label: '<span>Guardar</span>',
+          busy: false,
+          enabled: true
+        });
       }
     }
 
@@ -950,28 +914,47 @@
       const modelSelect = document.getElementById('model-select');
       pendingConfig.idModelIDActual = modelSelect.value;
       
-      const btn = document.querySelector('.btn-save');
-      btn.innerHTML  = '<div class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:white;"></div><span>Guardando...</span>';
-      btn.style.opacity = '0.85';
-      btn.disabled   = true;
+      const btn = getMainSaveButton();
+      setMainSaveButtonState(btn, {
+        label: '<div class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:white;"></div><span>Guardando...</span>',
+        busy: true,
+        enabled: false
+      });
 
       await finalizeSave(btn);
     });
 
     async function finalizeSave(btn) {
-      const res = await window.api.invoke('db:saveConfig', pendingConfig);
+      try {
+        const res = await invokeWithTimeout('db:saveConfig', pendingConfig, 10000);
 
-      if (res.ok) {
-        showToast('✓ Configuración guardada correctamente');
-        btn.innerHTML = iconOk() + '<span>Guardado</span>';
-        btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
-        setTimeout(() => window.api.send('close-conexion'), 1500);
-      } else {
-        btn.innerHTML  = '<span>Guardar</span>';
-        btn.style.opacity  = '1';
-        btn.style.background = '';
-        btn.disabled = false;
-        showToast('✗ Error al guardar: ' + res.error, true);
+        if (res && res.ok) {
+          showToast('✓ Configuración guardada correctamente');
+          setMainSaveButtonState(btn, {
+            label: iconOk() + '<span>Guardado</span>',
+            busy: false,
+            enabled: false,
+            background: 'linear-gradient(135deg, #27ae60, #2ecc71)'
+          });
+          setTimeout(() => window.api.send('close-conexion'), 1500);
+          return;
+        }
+
+        setMainSaveButtonState(btn, {
+          label: '<span>Guardar</span>',
+          busy: false,
+          enabled: true,
+          background: ''
+        });
+        showToast('✗ Error al guardar: ' + (res?.error || 'Respuesta inválida'), true);
+      } catch (err) {
+        setMainSaveButtonState(btn, {
+          label: '<span>Guardar</span>',
+          busy: false,
+          enabled: true,
+          background: ''
+        });
+        showToast('✗ Error al guardar: ' + err.message, true);
       }
     }
 

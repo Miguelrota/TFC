@@ -14,17 +14,76 @@ function getEnvPath() {
 
 require('dotenv').config({ path: getEnvPath() });
 
-const config = {
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    server: process.env.DB_SERVER || 'w2019-sql',
-    database: process.env.DB_NAME || 'GestionFormacion',
-    port: parseInt(process.env.DB_PORT || '1433'),
-    options: {
-        encrypt: process.env.DB_TRUST_SERVER_CERTIFICATE === 'true' ? false : true,
-        trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE === 'true'
+let readAppConfig = null;
+try {
+    ({ readConfig: readAppConfig } = require('../database/db'));
+} catch (_) {
+    readAppConfig = null;
+}
+
+function parseServerAndPort(rawServer, fallbackServer = 'localhost') {
+    let server = String(rawServer || fallbackServer).trim();
+    let port = parseInt(process.env.DB_PORT || '1433', 10) || 1433;
+
+    if (server.includes(',')) {
+        const [serverName, portText] = server.split(',');
+        server = String(serverName || fallbackServer).trim() || fallbackServer;
+        const parsedPort = parseInt(String(portText || '').trim(), 10);
+        if (!Number.isNaN(parsedPort)) {
+            port = parsedPort;
+        }
     }
-};
+
+    return { server, port };
+}
+
+function resolveConnectionConfig() {
+    let runtimeConfig = null;
+    try {
+        runtimeConfig = typeof readAppConfig === 'function' ? readAppConfig() : null;
+    } catch (_) {
+        runtimeConfig = null;
+    }
+
+    const rawServer = runtimeConfig?.server || process.env.DB_SERVER || 'w2019-sql';
+    const database = runtimeConfig?.database || process.env.DB_NAME || 'GestionFormacion';
+    const { server, port } = parseServerAndPort(rawServer);
+    const trustServerCertificate = process.env.DB_TRUST_SERVER_CERTIFICATE === 'true';
+
+    return {
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        server,
+        database,
+        port,
+        options: {
+            encrypt: !trustServerCertificate,
+            trustServerCertificate
+        }
+    };
+}
+
+const config = new Proxy({}, {
+    get(_target, prop) {
+        const resolved = resolveConnectionConfig();
+        return resolved[prop];
+    },
+    set() {
+        return true;
+    },
+    ownKeys() {
+        return ['user', 'password', 'server', 'database', 'port', 'options'];
+    },
+    getOwnPropertyDescriptor(_target, prop) {
+        if (['user', 'password', 'server', 'database', 'port', 'options'].includes(prop)) {
+            return {
+                enumerable: true,
+                configurable: true
+            };
+        }
+        return undefined;
+    }
+});
 
 const FIXED_ROLE_BY_USER = {
     mrodriguez: 'Administrador',
