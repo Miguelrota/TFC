@@ -246,6 +246,22 @@ function resolveRoleForUser(username, session = {}) {
     return 'Contable';
 }
 
+function isLocalConnection() {
+    try {
+        const config = readConfig();
+        const server = String(config?.server || '').trim().toLowerCase();
+        if (!server) return true;
+        return server === 'localhost'
+            || server.startsWith('localhost,')
+            || server === '127.0.0.1'
+            || server.startsWith('127.0.0.1,')
+            || server === '::1'
+            || server.startsWith('::1,');
+    } catch (_) {
+        return true;
+    }
+}
+
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1200,
@@ -870,34 +886,21 @@ ipcMain.handle('admin:listUsers', async () => {
         await ensureAdminSession();
         const overrides = loadRoleOverrides();
         const statusOverrides = loadAccountStatusOverrides();
-        const dbUsers = await sqlService.getUsersWithRoles();
-        const sourceUsers = Array.isArray(dbUsers) && dbUsers.length > 0
-            ? dbUsers
-            : Object.keys(ROLE_BY_USER).map((usuario) => ({
+        const hideAdmin = !isLocalConnection();
+        const users = Object.keys(ROLE_BY_USER)
+            .filter((usuario) => !(hideAdmin && usuario === 'admin'))
+            .map((usuario) => ({
                 usuario,
                 nombreCompleto: usuario === 'admin'
                     ? 'Administrador GForma'
                     : usuario === 'mrodriguez'
                         ? 'Miguel Rodriguez Taboas'
                         : 'Mdbarca',
-                rol: ROLE_BY_USER[usuario],
-                activo: true
-            }));
-
-        const users = sourceUsers.map((user) => {
-            const usuario = String(user.usuario || '').trim().toLowerCase();
-            return {
-                id: user.id || null,
-                usuario,
-                nombreCompleto: user.nombreCompleto || '',
-                rol: overrides[usuario] || user.rol || 'Contable',
-                activo: Object.prototype.hasOwnProperty.call(statusOverrides, usuario)
-                    ? !!statusOverrides[usuario]
-                    : !!user.activo,
+                rol: overrides[usuario] || ROLE_BY_USER[usuario],
+                activo: Object.prototype.hasOwnProperty.call(statusOverrides, usuario) ? !!statusOverrides[usuario] : true,
                 estadoConexion: getConnectionStateForUser(usuario),
-                origen: user.id ? 'db' : 'local'
-            };
-        });
+                origen: 'local'
+            }));
         return { ok: true, users };
     } catch (err) {
         return { ok: false, error: err.message };
