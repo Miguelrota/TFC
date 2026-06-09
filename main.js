@@ -39,6 +39,7 @@ const instanceId = `${process.pid}-${Date.now()}-${Math.random().toString(36).sl
 let currentPresenceUser = null;
 
 const ROLE_BY_USER = {
+    admin: 'Administrador',
     mrodriguez: 'Administrador',
     mdbarca: 'Contable'
 };
@@ -869,14 +870,34 @@ ipcMain.handle('admin:listUsers', async () => {
         await ensureAdminSession();
         const overrides = loadRoleOverrides();
         const statusOverrides = loadAccountStatusOverrides();
-        const users = Object.keys(ROLE_BY_USER).map((usuario) => ({
-            usuario,
-            nombreCompleto: usuario === 'mrodriguez' ? 'Miguel Rodriguez Taboas' : 'Mdbarca',
-            rol: overrides[usuario] || ROLE_BY_USER[usuario],
-            activo: Object.prototype.hasOwnProperty.call(statusOverrides, usuario) ? !!statusOverrides[usuario] : true,
-            estadoConexion: getConnectionStateForUser(usuario),
-            origen: 'local'
-        }));
+        const dbUsers = await sqlService.getUsersWithRoles();
+        const sourceUsers = Array.isArray(dbUsers) && dbUsers.length > 0
+            ? dbUsers
+            : Object.keys(ROLE_BY_USER).map((usuario) => ({
+                usuario,
+                nombreCompleto: usuario === 'admin'
+                    ? 'Administrador GForma'
+                    : usuario === 'mrodriguez'
+                        ? 'Miguel Rodriguez Taboas'
+                        : 'Mdbarca',
+                rol: ROLE_BY_USER[usuario],
+                activo: true
+            }));
+
+        const users = sourceUsers.map((user) => {
+            const usuario = String(user.usuario || '').trim().toLowerCase();
+            return {
+                id: user.id || null,
+                usuario,
+                nombreCompleto: user.nombreCompleto || '',
+                rol: overrides[usuario] || user.rol || 'Contable',
+                activo: Object.prototype.hasOwnProperty.call(statusOverrides, usuario)
+                    ? !!statusOverrides[usuario]
+                    : !!user.activo,
+                estadoConexion: getConnectionStateForUser(usuario),
+                origen: user.id ? 'db' : 'local'
+            };
+        });
         return { ok: true, users };
     } catch (err) {
         return { ok: false, error: err.message };
@@ -888,7 +909,6 @@ ipcMain.handle('admin:saveUser', async (_event, userData) => {
         await ensureAdminSession();
         const usuario = String(userData?.usuario || '').trim().toLowerCase();
         if (!usuario) throw new Error('USUARIO_REQUERIDO');
-        if (!ROLE_BY_USER[usuario]) throw new Error('USUARIO_NO_PERMITIDO');
 
         const rol = String(userData?.rol || 'Contable').trim() === 'Administrador' ? 'Administrador' : 'Contable';
         const activo = !!userData?.activo;
