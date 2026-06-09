@@ -86,6 +86,7 @@ const config = new Proxy({}, {
 });
 
 const FIXED_ROLE_BY_USER = {
+    admin: 'Administrador',
     mrodriguez: 'Administrador',
     mdbarca: 'Contable'
 };
