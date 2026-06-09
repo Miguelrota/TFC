@@ -604,6 +604,19 @@ VALUES
 ('us_limitado_tareasYpresencia', 'uslimitado', 'Usuario Limitado Tareas', 1);
 PRINT 'Datos semilla de [Seguridad_Usuarios] insertados.';
 
+IF NOT EXISTS (SELECT 1 FROM dbo.Seguridad_Usuarios WHERE Usuario = 'mrodriguez')
+BEGIN
+    INSERT INTO dbo.Seguridad_Usuarios (Usuario, Contrasena, NombreCompleto, Activo)
+    VALUES ('mrodriguez', 'mrodriguez', 'Miguel Rodriguez Taboas', 1);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Seguridad_Usuarios WHERE Usuario = 'mdbarca')
+BEGIN
+    INSERT INTO dbo.Seguridad_Usuarios (Usuario, Contrasena, NombreCompleto, Activo)
+    VALUES ('mdbarca', 'mdbarca', 'Usuario Principal Windows (mdbarca)', 1);
+END
+PRINT 'Datos semilla de [mrodriguez/mdbarca] insertados.';
+
 -- Roles fijos por usuario
 MERGE dbo.Seguridad_RolesUsuarios AS target
 USING (VALUES
@@ -619,13 +632,6 @@ WHEN NOT MATCHED THEN
     VALUES (source.Usuario, source.Rol, 1, SYSDATETIME());
 PRINT 'Datos semilla de [Seguridad_RolesUsuarios] insertados.';
 
--- Registrar usuario de Windows para auto-login local (casa)
-DECLARE @WindowsUser VARCHAR(100) = 'mdbarca';
-IF NOT EXISTS (SELECT 1 FROM dbo.Seguridad_Usuarios WHERE Usuario = @WindowsUser)
-BEGIN
-    INSERT INTO dbo.Seguridad_Usuarios (Usuario, Contrasena, NombreCompleto, Activo)
-    VALUES (@WindowsUser, 'windows_pass', 'Usuario Principal Windows (mdbarca)', 1);
-END
 GO
 
 PRINT '============================================================================';

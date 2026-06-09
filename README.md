@@ -46,6 +46,11 @@ npm start
 
 El esquema principal de la base de datos esta en `database/schema.sql`.
 
+Usuarios de prueba incluidos en el seed:
+- `admin` / `admin`
+- `mrodriguez` / `mrodriguez`
+- `mdbarca` / `mdbarca`
+
 Para crear la estructura inicial:
 
 1. Abre tu gestor de base de datos, por ejemplo SQL Server Management Studio.
