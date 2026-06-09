@@ -632,6 +632,150 @@ WHEN NOT MATCHED THEN
     VALUES (source.Usuario, source.Rol, 1, SYSDATETIME());
 PRINT 'Datos semilla de [Seguridad_RolesUsuarios] insertados.';
 
+-- Facturas de ejemplo para la sociedad GF GESTION Y FORMACION SL
+DECLARE @SociedadFacturasId INT = (
+    SELECT TOP 1 idSociedad
+    FROM dbo.Sociedades
+    WHERE RazonSocial = 'GF GESTION Y FORMACION SL'
+);
+
+DECLARE @ProvAlfil INT;
+DECLARE @ProvTarga INT;
+DECLARE @ProvArsys INT;
+DECLARE @ProvMartinez INT;
+
+IF NOT EXISTS (SELECT 1 FROM dbo.gf_Proveedores WHERE Documento = 'A12345678')
+BEGIN
+    INSERT INTO dbo.gf_Proveedores (IdTipoDocumento, Documento, RazonSocial, NombreComercial, Direccion, IdPais, CodigoPostal, IdProvincia, Poblacion)
+    VALUES (1, 'A12345678', 'ALFIL LIMPIEZAS SL', 'Alfil Limpiezas', 'Calle Limpieza, 12', 73, '28001', 28, 'Madrid');
+END
+SELECT @ProvAlfil = IdProveedor FROM dbo.gf_Proveedores WHERE Documento = 'A12345678';
+
+IF NOT EXISTS (SELECT 1 FROM dbo.gf_Proveedores WHERE Documento = 'B23456789')
+BEGIN
+    INSERT INTO dbo.gf_Proveedores (IdTipoDocumento, Documento, RazonSocial, NombreComercial, Direccion, IdPais, CodigoPostal, IdProvincia, Poblacion)
+    VALUES (1, 'B23456789', 'TARGA TELEMATICS SL', 'Targa Telematics', 'Avenida Telematica, 45', 73, '08001', 8, 'Barcelona');
+END
+SELECT @ProvTarga = IdProveedor FROM dbo.gf_Proveedores WHERE Documento = 'B23456789';
+
+IF NOT EXISTS (SELECT 1 FROM dbo.gf_Proveedores WHERE Documento = 'C34567890')
+BEGIN
+    INSERT INTO dbo.gf_Proveedores (IdTipoDocumento, Documento, RazonSocial, NombreComercial, Direccion, IdPais, CodigoPostal, IdProvincia, Poblacion)
+    VALUES (1, 'C34567890', 'ARSYS INTERNET SLU', 'Arsys Internet S.L.U.', 'Parque Tecnologico, 1', 73, '26006', 26, 'Logroño');
+END
+SELECT @ProvArsys = IdProveedor FROM dbo.gf_Proveedores WHERE Documento = 'C34567890';
+
+IF NOT EXISTS (SELECT 1 FROM dbo.gf_Proveedores WHERE Documento = 'D45678901')
+BEGIN
+    INSERT INTO dbo.gf_Proveedores (IdTipoDocumento, Documento, RazonSocial, NombreComercial, Direccion, IdPais, CodigoPostal, IdProvincia, Poblacion)
+    VALUES (1, 'D45678901', 'MARTINEZ & SOTELO ASESORES SL', 'MARTINEZ & SOTELO', 'Paseo de la Castellana, 90', 73, '28046', 28, 'Madrid');
+END
+SELECT @ProvMartinez = IdProveedor FROM dbo.gf_Proveedores WHERE Documento = 'D45678901';
+
+IF @SociedadFacturasId IS NOT NULL
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM dbo.FacturasProveedores
+        WHERE idSociedad = @SociedadFacturasId
+          AND NumFactuProv = 'ALF-2026-001'
+    )
+    BEGIN
+        DECLARE @FacturaAlfil INT;
+        INSERT INTO dbo.FacturasProveedores
+        (idSociedad, idProveedor, NumFactuProv, NumFactura, Fecha, Concepto, BaseImponible, IVA, Total_con_IVA, FechaEntrada, Validado, idFacturaTipo)
+        VALUES
+        (@SociedadFacturasId, @ProvAlfil, 'ALF-2026-001', 1, '2026-03-24', 'SERVICIOS DE LIMPIEZA', 64.84, 13.62, 78.46, '2026-03-24', 1, 4);
+        SELECT @FacturaAlfil = idFacturaProveedor
+        FROM dbo.FacturasProveedores
+        WHERE idSociedad = @SociedadFacturasId
+          AND NumFactuProv = 'ALF-2026-001';
+        INSERT INTO dbo.FacturasProveedores_Lineas
+        (idFacturaProveedor, NumOrden, Concepto, Cantidad, Precio, Porc_IVA, IDIVA, idretencion, idproveedorIva, idunidadmedida)
+        VALUES
+        (@FacturaAlfil, 1, 'SERVICIOS DE LIMPIEZA', 1, 64.84, 21, 8, NULL, @ProvAlfil, 7);
+        INSERT INTO dbo.FacturasProveedores_Vencimientos
+        (idFacturaProveedor, Fecha, Importe, Pagado, Imp_Pagado, Pagar, NumVencimiento, FechaPago, IdFormaPago, idTesoreria)
+        VALUES
+        (@FacturaAlfil, '2026-04-01', 78.46, 0, 0, 1, 1, NULL, 19, 6);
+    END
+
+    IF NOT EXISTS (
+        SELECT 1 FROM dbo.FacturasProveedores
+        WHERE idSociedad = @SociedadFacturasId
+          AND NumFactuProv = 'TARGA-2026-001'
+    )
+    BEGIN
+        DECLARE @FacturaTarga INT;
+        INSERT INTO dbo.FacturasProveedores
+        (idSociedad, idProveedor, NumFactuProv, NumFactura, Fecha, Concepto, BaseImponible, IVA, Total_con_IVA, FechaEntrada, Validado, idFacturaTipo)
+        VALUES
+        (@SociedadFacturasId, @ProvTarga, 'TARGA-2026-001', 2, '2026-04-08', 'VIASAT BASIC INSURANCE', 15.70, 3.30, 19.00, '2026-04-08', 1, 4);
+        SELECT @FacturaTarga = idFacturaProveedor
+        FROM dbo.FacturasProveedores
+        WHERE idSociedad = @SociedadFacturasId
+          AND NumFactuProv = 'TARGA-2026-001';
+        INSERT INTO dbo.FacturasProveedores_Lineas
+        (idFacturaProveedor, NumOrden, Concepto, Cantidad, Precio, Porc_IVA, IDIVA, idretencion, idproveedorIva, idunidadmedida)
+        VALUES
+        (@FacturaTarga, 1, 'VIASAT BASIC INSURANCE', 1, 15.70, 21, 8, NULL, @ProvTarga, 7);
+        INSERT INTO dbo.FacturasProveedores_Vencimientos
+        (idFacturaProveedor, Fecha, Importe, Pagado, Imp_Pagado, Pagar, NumVencimiento, FechaPago, IdFormaPago, idTesoreria)
+        VALUES
+        (@FacturaTarga, '2026-04-08', 19.00, 0, 0, 1, 1, NULL, 19, 6);
+    END
+
+    IF NOT EXISTS (
+        SELECT 1 FROM dbo.FacturasProveedores
+        WHERE idSociedad = @SociedadFacturasId
+          AND NumFactuProv = 'ARSYS-2026-001'
+    )
+    BEGIN
+        DECLARE @FacturaArsys INT;
+        INSERT INTO dbo.FacturasProveedores
+        (idSociedad, idProveedor, NumFactuProv, NumFactura, Fecha, Concepto, BaseImponible, IVA, Total_con_IVA, FechaEntrada, Validado, idFacturaTipo)
+        VALUES
+        (@SociedadFacturasId, @ProvArsys, 'ARSYS-2026-001', 3, '2026-04-20', 'Renovación registro gformainteco.com (19/06/2026-18/06/2027)', 25.00, 5.25, 30.25, '2026-04-20', 1, 4);
+        SELECT @FacturaArsys = idFacturaProveedor
+        FROM dbo.FacturasProveedores
+        WHERE idSociedad = @SociedadFacturasId
+          AND NumFactuProv = 'ARSYS-2026-001';
+        INSERT INTO dbo.FacturasProveedores_Lineas
+        (idFacturaProveedor, NumOrden, Concepto, Cantidad, Precio, Porc_IVA, IDIVA, idretencion, idproveedorIva, idunidadmedida)
+        VALUES
+        (@FacturaArsys, 1, 'Renovación registro gformainteco.com (19/06/2026-18/06/2027)', 1, 25.00, 21, 8, NULL, @ProvArsys, 7);
+        INSERT INTO dbo.FacturasProveedores_Vencimientos
+        (idFacturaProveedor, Fecha, Importe, Pagado, Imp_Pagado, Pagar, NumVencimiento, FechaPago, IdFormaPago, idTesoreria)
+        VALUES
+        (@FacturaArsys, '2026-04-20', 30.25, 0, 0, 1, 1, NULL, 19, 6);
+    END
+
+    IF NOT EXISTS (
+        SELECT 1 FROM dbo.FacturasProveedores
+        WHERE idSociedad = @SociedadFacturasId
+          AND NumFactuProv = 'MYS-2026-001'
+    )
+    BEGIN
+        DECLARE @FacturaMartinez INT;
+        INSERT INTO dbo.FacturasProveedores
+        (idSociedad, idProveedor, NumFactuProv, NumFactura, Fecha, Concepto, BaseImponible, IVA, Total_con_IVA, FechaEntrada, Validado, idFacturaTipo)
+        VALUES
+        (@SociedadFacturasId, @ProvMartinez, 'MYS-2026-001', 4, '2026-04-20', 'HONORARIOS POR SERVICIOS DE ASESORAMIENTO MES', 164.64, 34.57, 199.21, '2026-04-20', 1, 4);
+        SELECT @FacturaMartinez = idFacturaProveedor
+        FROM dbo.FacturasProveedores
+        WHERE idSociedad = @SociedadFacturasId
+          AND NumFactuProv = 'MYS-2026-001';
+        INSERT INTO dbo.FacturasProveedores_Lineas
+        (idFacturaProveedor, NumOrden, Concepto, Cantidad, Precio, Porc_IVA, IDIVA, idretencion, idproveedorIva, idunidadmedida)
+        VALUES
+        (@FacturaMartinez, 1, 'HONORARIOS POR SERVICIOS DE ASESORAMIENTO MES', 1, 164.64, 21, 8, NULL, @ProvMartinez, 7);
+        INSERT INTO dbo.FacturasProveedores_Vencimientos
+        (idFacturaProveedor, Fecha, Importe, Pagado, Imp_Pagado, Pagar, NumVencimiento, FechaPago, IdFormaPago, idTesoreria)
+        VALUES
+        (@FacturaMartinez, '2026-04-20', 199.21, 0, 0, 1, 1, NULL, 19, 6);
+    END
+END
+PRINT 'Datos semilla de [FacturasProveedores] insertados.';
+
 GO
 
 PRINT '============================================================================';
