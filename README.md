@@ -1,33 +1,33 @@
 # Facturas GForma
 
-Sistema de extracción automática de datos de facturas mediante inteligencia artificial usando la API de Mindee y persistencia en SQL Server. Proyecto final.
+Sistema de extraccion automatica de datos de facturas mediante inteligencia artificial usando Mindee y persistencia en SQL Server.
 
-## Tecnologías
+## Tecnologias
 
-- **Backend / Entorno**: Node.js + Electron
-- **IA**: Mindee API (Procesamiento de facturas)
-- **Frontend**: HTML/CSS/JavaScript puro
-- **Base de datos**: Microsoft SQL Server
-- **Build**: Electron Builder
+- Backend / entorno: Node.js + Electron
+- IA: Mindee API
+- Frontend: HTML, CSS y JavaScript
+- Base de datos: Microsoft SQL Server
+- Build: Electron Builder
 
-## Requisitos Previos
+## Requisitos previos
 
-- **Node.js** (v14 o superior)
-- **Microsoft SQL Server** con una base de datos creada.
-- Cuenta en [Mindee](https://mindee.com/) con API key para extracción de facturas.
+- Node.js v14 o superior
+- Microsoft SQL Server con una base de datos creada
+- Cuenta en Mindee con API key para extraccion de facturas
 
-## Configuración y Seguridad
+## Configuracion y seguridad
 
 > [!IMPORTANT]
-> **Seguridad básica:** No se deben subir contraseñas ni tokens reales al repositorio.
+> No subas contrasenas ni tokens reales al repositorio.
 
 1. Clona el repositorio.
-2. Copia el archivo `.env.example` y renómbralo a `.env`.
-3. Edita el archivo `.env` para incluir tus credenciales reales:
+2. Copia el archivo `.env.example` y renombralo a `.env`.
+3. Edita `.env` con tus credenciales reales.
 
 ```env
 DB_USER=tu_usuario
-DB_PASSWORD=tu_contraseña
+DB_PASSWORD=tu_contrasena
 DB_SERVER=localhost
 DB_NAME=GestionFormacion
 DB_PORT=1433
@@ -35,34 +35,33 @@ DB_TRUST_SERVER_CERTIFICATE=true
 MINDEE_API_KEY=tu_api_key_de_mindee
 ```
 
-## Instalación y Ejecución
+## Instalacion y ejecucion
 
 ```bash
-# Instalar dependencias
 npm install
-
-# Iniciar la aplicación en modo desarrollo
 npm start
 ```
 
-## Carga de Datos de Ejemplo
+## Base de datos
 
-Para poblar la base de datos con información inicial necesaria para el funcionamiento (como sociedades o tipos de proveedores):
-1. Abre tu gestor de base de datos (SQL Server Management Studio u otro).
-2. Conéctate a la base de datos `GestionFormacion`.
-3. Ejecuta el script `/database/seed.sql`.
+El esquema principal de la base de datos esta en `database/schema.sql`.
 
-## Estructura del Proyecto
+Para crear la estructura inicial:
 
-```
+1. Abre tu gestor de base de datos, por ejemplo SQL Server Management Studio.
+2. Conectate a la base de datos `GestionFormacion`.
+3. Ejecuta el script `database/schema.sql`.
+
+## Estructura del proyecto
+
+```text
 Facturas GForma/
 ├── config/          # Archivos XML y configuraciones
-├── css/             # Estilos de la aplicación
-├── database/        # Scripts SQL y gestión de DB
-├── docs/            # Memoria del proyecto en PDF/MD
-├── js/              # Lógica del cliente UI
-├── services/        # Lógica de servidor (Mindee, SQL, XML)
-├── views/           # Vistas en HTML
+├── database/        # Scripts SQL y gestion de DB
+├── docs/            # Memoria del proyecto en PDF
+├── js/              # Logica de la interfaz
+├── services/        # Logica de servidor
+├── views/           # Vistas HTML
 ├── main.js          # Punto de entrada de Electron
 └── index.html       # Interfaz principal
 ```
